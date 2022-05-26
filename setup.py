@@ -46,7 +46,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 def fetch_version():
     """Get the version from the package"""
-    with open(os.path.join(HERE, 'anki_vector', 'version.py')) as version_file:
+    with open(os.path.join(HERE, 'vector', 'version.py')) as version_file:
         versions = {}
         exec(version_file.read(), versions)
         return versions
@@ -66,12 +66,10 @@ setup(
     name='pyHAVector',
     version=VERSION,
     description="The Vector SDK is a connected vision- and character-based robotics platform for everyone.",
-    long_description=__doc__,
-    url='https://github.com/cyb3rdog/vector-python-sdk',
+    url='https://github.com/mtrab/pyhavector',
     author='Anki, Inc',
     author_email='developer@anki.com',
     license='Apache License, Version 2.0',
-    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
@@ -82,12 +80,6 @@ setup(
         'Programming Language :: Python :: 3.8',
     ],
     zip_safe=True,
-    keywords='anki vector robot robotics sdk ai vision'.split(),
-    packages=['anki_vector', 'anki_vector.camera_viewer', 'anki_vector.configure', 'anki_vector.configure_pod', 'anki_vector.messaging', 'anki_vector.opengl', 'anki_vector.reserve_control'],
-    package_data={
-        'anki_vector': ['LICENSE.txt', 'opengl/assets/*.obj', 'opengl/assets/*.mtl', 'opengl/assets/*.jpg',
-                  'opengl/assets/LICENSE.txt']
-    },
     install_requires=get_requirements(),
     extras_require={
         '3dviewer': ['PyOpenGL>=3.1'],
