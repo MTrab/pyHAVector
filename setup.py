@@ -63,7 +63,7 @@ def get_requirements():
     return reqs
 
 setup(
-    name='cyb3r_vector_sdk',
+    name='pyHAVector',
     version=VERSION,
     description="The Vector SDK is a connected vision- and character-based robotics platform for everyone.",
     long_description=__doc__,
