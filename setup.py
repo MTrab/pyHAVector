@@ -37,7 +37,7 @@ Requirements:
 
 import os.path
 import sys
-from setuptools import setup
+from setuptools import find_packages, setup
 
 if sys.version_info < (3, 6, 1):
     sys.exit('The Vector SDK requires Python 3.6.1 or later')
@@ -70,6 +70,7 @@ setup(
     author='Anki, Inc',
     author_email='developer@anki.com',
     license='Apache License, Version 2.0',
+    packages=find_packages(),
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
