@@ -21,7 +21,7 @@ events.  SDK users can respond with their own scripted actions.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['UserIntentEvent', 'UserIntent']
+__all__ = ["UserIntentEvent", "UserIntent"]
 
 from enum import Enum
 
@@ -36,6 +36,7 @@ class UserIntentEvent(Enum):
     This list reflect only the voice commands available
     to the SDK, as some are not available for development
     use."""
+
     #: example  "How old are you?"
     character_age = 0
     #: example  "Check the timer."
@@ -169,7 +170,7 @@ class UserIntent:
 
     @property
     def intent_event(self) -> UserIntentEvent:
-        """ This returns the voice command event as a UserIntentEvent"""
+        """This returns the voice command event as a UserIntentEvent"""
         return self._intent_event
 
     @property

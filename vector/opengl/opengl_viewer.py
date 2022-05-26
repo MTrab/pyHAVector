@@ -51,7 +51,7 @@ Warning:
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['OpenGLViewer']
+__all__ = ["OpenGLViewer"]
 
 import math
 import multiprocessing as mp
@@ -59,24 +59,53 @@ import sys
 from typing import List
 
 from vector import nav_map, util
+
 from . import opengl, opengl_vector
 
-
 try:
-    from OpenGL.GL import (GL_FILL,
-                           GL_FRONT_AND_BACK,
-                           GL_LIGHTING, GL_NORMALIZE,
-                           GL_TEXTURE_2D,
-                           glBindTexture, glColor3f, glDisable, glEnable,
-                           glMultMatrixf, glPolygonMode, glPopMatrix, glPushMatrix,
-                           glScalef, glWindowPos2f)
-    from OpenGL.GLUT import (ctypes,
-                             GLUT_ACTIVE_ALT, GLUT_ACTIVE_CTRL, GLUT_ACTIVE_SHIFT, GLUT_BITMAP_9_BY_15,
-                             GLUT_DOWN, GLUT_LEFT_BUTTON, GLUT_RIGHT_BUTTON, GLUT_VISIBLE,
-                             glutBitmapCharacter, glutCheckLoop, glutGetModifiers, glutIdleFunc,
-                             glutKeyboardFunc, glutKeyboardUpFunc, glutMainLoop, glutMouseFunc, glutMotionFunc, glutPassiveMotionFunc,
-                             glutPostRedisplay, glutSpecialFunc, glutSpecialUpFunc, glutVisibilityFunc)
     from OpenGL.error import NullFunctionError
+    from OpenGL.GL import (
+        GL_FILL,
+        GL_FRONT_AND_BACK,
+        GL_LIGHTING,
+        GL_NORMALIZE,
+        GL_TEXTURE_2D,
+        glBindTexture,
+        glColor3f,
+        glDisable,
+        glEnable,
+        glMultMatrixf,
+        glPolygonMode,
+        glPopMatrix,
+        glPushMatrix,
+        glScalef,
+        glWindowPos2f,
+    )
+    from OpenGL.GLUT import (
+        GLUT_ACTIVE_ALT,
+        GLUT_ACTIVE_CTRL,
+        GLUT_ACTIVE_SHIFT,
+        GLUT_BITMAP_9_BY_15,
+        GLUT_DOWN,
+        GLUT_LEFT_BUTTON,
+        GLUT_RIGHT_BUTTON,
+        GLUT_VISIBLE,
+        ctypes,
+        glutBitmapCharacter,
+        glutCheckLoop,
+        glutGetModifiers,
+        glutIdleFunc,
+        glutKeyboardFunc,
+        glutKeyboardUpFunc,
+        glutMainLoop,
+        glutMotionFunc,
+        glutMouseFunc,
+        glutPassiveMotionFunc,
+        glutPostRedisplay,
+        glutSpecialFunc,
+        glutSpecialUpFunc,
+        glutVisibilityFunc,
+    )
 
 except ImportError as import_exc:
     opengl.raise_opengl_or_pillow_import_error(import_exc)
@@ -85,15 +114,21 @@ except ImportError as import_exc:
 # Constants
 
 
-class _RobotControlIntents():  # pylint: disable=too-few-public-methods
+class _RobotControlIntents:  # pylint: disable=too-few-public-methods
     """Input intents for controlling the robot.
 
     These are sent from the OpenGL process, and consumed by the main process for
     issuing movement commands on Vector (to provide a remote-control interface).
     """
 
-    def __init__(self, left_wheel_speed=0.0, right_wheel_speed=0.0,
-                 lift_speed=0.0, head_speed=0.0, connect_to_light_block=False):
+    def __init__(
+        self,
+        left_wheel_speed=0.0,
+        right_wheel_speed=0.0,
+        lift_speed=0.0,
+        head_speed=0.0,
+        connect_to_light_block=False,
+    ):
         self.left_wheel_speed = left_wheel_speed
         self.right_wheel_speed = right_wheel_speed
         self.lift_speed = lift_speed
@@ -105,7 +140,7 @@ def _draw_text(font, input_str, x, y, line_height=16, r=1.0, g=1.0, b=1.0):
     """Render text based on window position. The origin is in the bottom-left."""
     glColor3f(r, g, b)
     glWindowPos2f(x, y)
-    input_list = input_str.split('\n')
+    input_list = input_str.split("\n")
     y = y + (line_height * (len(input_list) - 1))
     for line in input_list:
         glWindowPos2f(x, y)
@@ -115,19 +150,21 @@ def _draw_text(font, input_str, x, y, line_height=16, r=1.0, g=1.0, b=1.0):
 
 
 def _glut_install_instructions():
-    if sys.platform.startswith('linux'):
+    if sys.platform.startswith("linux"):
         return "Install freeglut: `sudo apt-get install freeglut3`"
-    if sys.platform.startswith('darwin'):
+    if sys.platform.startswith("darwin"):
         return "GLUT should already be installed by default on macOS!"
-    if sys.platform in ('win32', 'cygwin'):
-        return "Install freeglut: You can download it from http://freeglut.sourceforge.net/ \n"\
-            "You just need the `freeglut.dll` file, from any of the 'Windows binaries' downloads. "\
-            "Place the DLL next to your Python script, or install it somewhere in your PATH "\
+    if sys.platform in ("win32", "cygwin"):
+        return (
+            "Install freeglut: You can download it from http://freeglut.sourceforge.net/ \n"
+            "You just need the `freeglut.dll` file, from any of the 'Windows binaries' downloads. "
+            "Place the DLL next to your Python script, or install it somewhere in your PATH "
             "to allow any script to use it."
+        )
     return "(Instructions unknown for platform %s)" % sys.platform
 
 
-class _OpenGLViewController():
+class _OpenGLViewController:
     """Controller that registers for keyboard and mouse input through GLUT, and uses them to update
     the camera and listen for a shutdown cue.
 
@@ -139,7 +176,13 @@ class _OpenGLViewController():
     :type viewer: OpenGLViewer
     """
 
-    def __init__(self, shutdown_delegate: callable, camera: opengl.Camera, input_intent_queue: mp.Queue, viewer):
+    def __init__(
+        self,
+        shutdown_delegate: callable,
+        camera: opengl.Camera,
+        input_intent_queue: mp.Queue,
+        viewer,
+    ):
 
         self._logger = util.get_class_logger(__name__, self)
         self._input_intent_queue = input_intent_queue
@@ -177,8 +220,7 @@ class _OpenGLViewController():
     #### Public Methods ####
 
     def initialize(self):
-        """Sets up the OpenGL window and binds input callbacks to it
-        """
+        """Sets up the OpenGL window and binds input callbacks to it"""
 
         glutKeyboardFunc(self._on_key_down)
         glutSpecialFunc(self._on_special_key_down)
@@ -199,8 +241,11 @@ class _OpenGLViewController():
 
         if not has_keyboard_up or not has_special_up:
             # Warn on old GLUT implementations that don't implement much of the interface.
-            self._logger.warning("Warning: Old GLUT implementation detected - keyboard remote control of Vector disabled."
-                                 "We recommend installing freeglut. %s", _glut_install_instructions())
+            self._logger.warning(
+                "Warning: Old GLUT implementation detected - keyboard remote control of Vector disabled."
+                "We recommend installing freeglut. %s",
+                _glut_install_instructions(),
+            )
             self._is_keyboard_control_enabled = False
         else:
             self._is_keyboard_control_enabled = True
@@ -208,7 +253,9 @@ class _OpenGLViewController():
         try:
             GLUT_BITMAP_9_BY_15
         except NameError:
-            self._logger.warning("Warning: GLUT font not detected. Help message will be unavailable.")
+            self._logger.warning(
+                "Warning: GLUT font not detected. Help message will be unavailable."
+            )
 
         glutMouseFunc(self._on_mouse_button)
         glutMotionFunc(self._on_mouse_move)
@@ -220,18 +267,16 @@ class _OpenGLViewController():
     #### Private Methods ####
 
     def _update_modifier_keys(self):
-        """Updates alt, ctrl, and shift states.
-        """
+        """Updates alt, ctrl, and shift states."""
         modifiers = glutGetModifiers()
-        self._is_alt_down = (modifiers & GLUT_ACTIVE_ALT != 0)
-        self._is_ctrl_down = (modifiers & GLUT_ACTIVE_CTRL != 0)
-        self._is_shift_down = (modifiers & GLUT_ACTIVE_SHIFT != 0)
+        self._is_alt_down = modifiers & GLUT_ACTIVE_ALT != 0
+        self._is_ctrl_down = modifiers & GLUT_ACTIVE_CTRL != 0
+        self._is_shift_down = modifiers & GLUT_ACTIVE_SHIFT != 0
 
     def _key_byte_to_lower(self, key):  # pylint: disable=no-self-use
-        """Convert bytes-object (representing keyboard character) to lowercase equivalent.
-        """
-        if b'A' <= key <= b'Z':
-            lowercase_key = ord(key) - ord(b'A') + ord(b'a')
+        """Convert bytes-object (representing keyboard character) to lowercase equivalent."""
+        if b"A" <= key <= b"Z":
+            lowercase_key = ord(key) - ord(b"A") + ord(b"a")
             lowercase_key = bytes([lowercase_key])
             return lowercase_key
         return key
@@ -296,7 +341,7 @@ class _OpenGLViewController():
         # Don't update modifier keys- reading modifier keys is unreliable
         # from _on_mouse_button (for LMB down/up), only SHIFT key seems to read there
         # self._update_modifier_keys()
-        is_down = (state == GLUT_DOWN)
+        is_down = state == GLUT_DOWN
         self._is_mouse_down[button] = is_down
         self._mouse_pos = util.Vector2(x, y)
 
@@ -316,8 +361,9 @@ class _OpenGLViewController():
 
         left_button = self._is_mouse_down.get(GLUT_LEFT_BUTTON, False)
         # For laptop and other 1-button mouse users, treat 'x' key as a right mouse button too
-        right_button = (self._is_mouse_down.get(GLUT_RIGHT_BUTTON, False)
-                        or self._is_key_pressed.get(b'x', False))
+        right_button = self._is_mouse_down.get(
+            GLUT_RIGHT_BUTTON, False
+        ) or self._is_key_pressed.get(b"x", False)
 
         MOUSE_SPEED_SCALAR = 1.0  # general scalar for all mouse movement sensitivity
         MOUSE_ROTATE_SCALAR = 0.025  # additional scalar for rotation sensitivity
@@ -330,11 +376,14 @@ class _OpenGLViewController():
             # Move forward/back and left/right
             self._camera.move(forward_amount=mouse_delta.y, right_amount=mouse_delta.x)
         elif left_button:
-            if self._is_key_pressed.get(b'z', False):
+            if self._is_key_pressed.get(b"z", False):
                 # Zoom in/out
                 self._camera.zoom(mouse_delta.y)
             else:
-                self._camera.turn(mouse_delta.x * MOUSE_ROTATE_SCALAR, mouse_delta.y * MOUSE_ROTATE_SCALAR)
+                self._camera.turn(
+                    mouse_delta.x * MOUSE_ROTATE_SCALAR,
+                    mouse_delta.y * MOUSE_ROTATE_SCALAR,
+                )
 
     def _update_intents_for_robot(self):
         # Update driving intents based on current input, and pass to SDK thread
@@ -345,10 +394,10 @@ class _OpenGLViewController():
             neg_key = self._is_key_pressed.get(key2, False)
             return pos_key - neg_key
 
-        drive_dir = get_intent_direction(b'w', b's')
-        turn_dir = get_intent_direction(b'd', b'a')
-        lift_dir = get_intent_direction(b'r', b'f')
-        head_dir = get_intent_direction(b't', b'g')
+        drive_dir = get_intent_direction(b"w", b"s")
+        turn_dir = get_intent_direction(b"d", b"a")
+        lift_dir = get_intent_direction(b"r", b"f")
+        head_dir = get_intent_direction(b"t", b"g")
         if drive_dir < 0:
             # It feels more natural to turn the opposite way when reversing
             turn_dir = -turn_dir
@@ -369,10 +418,11 @@ class _OpenGLViewController():
         lift_speed = 4.0 * lift_dir * speed_scalar
         head_speed = head_dir * speed_scalar
 
-        connect_block = self._is_key_pressed.get(b'c', False)
+        connect_block = self._is_key_pressed.get(b"c", False)
 
-        control_intents = _RobotControlIntents(left_wheel_speed, right_wheel_speed,
-                                               lift_speed, head_speed, connect_block)
+        control_intents = _RobotControlIntents(
+            left_wheel_speed, right_wheel_speed, lift_speed, head_speed, connect_block
+        )
         self._input_intent_queue.put(control_intents, True)
 
     def _idle(self):
@@ -399,9 +449,8 @@ default_resolution = [800, 600]
 #: and a viewable distance range of 1.0 to 1000.0 will provide a
 #: visible space comparable with most physical Vector environments.
 default_projector = opengl.Projector(
-    fov=45.0,
-    near_clip_plane=1.0,
-    far_clip_plane=1000.0)
+    fov=45.0, near_clip_plane=1.0, far_clip_plane=1000.0
+)
 
 #: A default camera object provided for OpenGL Vector programs.
 #: Starts close to and looking at the charger.
@@ -410,22 +459,26 @@ default_camera = opengl.Camera(
     up=util.Vector3(0.0, 0.0, 1.0),
     distance=500.0,
     pitch=math.radians(40),
-    yaw=math.radians(270))
+    yaw=math.radians(270),
+)
 
 #: A default light group provided for OpenGL Vector programs.
 #: Contains one light near the origin.
-default_lights = [opengl.Light(
-    ambient_color=[1.0, 1.0, 1.0, 1.0],
-    diffuse_color=[1.0, 1.0, 1.0, 1.0],
-    specular_color=[1.0, 1.0, 1.0, 1.0],
-    position=util.Vector3(0, 32, 20))]
+default_lights = [
+    opengl.Light(
+        ambient_color=[1.0, 1.0, 1.0, 1.0],
+        diffuse_color=[1.0, 1.0, 1.0, 1.0],
+        specular_color=[1.0, 1.0, 1.0, 1.0],
+        position=util.Vector3(0, 32, 20),
+    )
+]
 
 # Global viewer instance.  Stored to make sure multiple viewers are not
 # instantiated simultaneously.
 opengl_viewer = None  # type: OpenGLViewer
 
 
-class OpenGLViewer():
+class OpenGLViewer:
     """OpenGL-based 3D Viewer.
 
     Handles rendering of a 3D world view including navigation map.
@@ -450,18 +503,20 @@ class OpenGLViewer():
     :param show_viewer_controls: Specifies whether to draw controls on the view.
     """
 
-    def __init__(self,
-                 close_event: mp.Event,
-                 input_intent_queue: mp.Queue,
-                 nav_map_queue: mp.Queue,
-                 world_frame_queue: mp.Queue,
-                 extra_render_function_queue: mp.Queue,
-                 user_data_queue: mp.Queue,
-                 resolution: List[int] = None,
-                 projector: opengl.Projector = None,
-                 camera: opengl.Camera = None,
-                 lights: List[opengl.Light] = None,
-                 show_viewer_controls: bool = True):
+    def __init__(
+        self,
+        close_event: mp.Event,
+        input_intent_queue: mp.Queue,
+        nav_map_queue: mp.Queue,
+        world_frame_queue: mp.Queue,
+        extra_render_function_queue: mp.Queue,
+        user_data_queue: mp.Queue,
+        resolution: List[int] = None,
+        projector: opengl.Projector = None,
+        camera: opengl.Camera = None,
+        lights: List[opengl.Light] = None,
+        show_viewer_controls: bool = True,
+    ):
         if resolution is None:
             resolution = default_resolution
         if projector is None:
@@ -485,31 +540,39 @@ class OpenGLViewer():
 
         # Controls
         self.show_controls = show_viewer_controls
-        self._instructions = '\n'.join(['W, S: Move forward, backward',
-                                        'A, D: Turn left, right',
-                                        'R, F: Lift up, down',
-                                        'T, G: Head up, down',
-                                        '',
-                                        'C: Connect to LightCube',
-                                        '',
-                                        'LMB: Rotate camera',
-                                        'RMB: Move camera',
-                                        'LMB + RMB: Move camera up/down',
-                                        'LMB + Z: Zoom camera',
-                                        'X: same as RMB',
-                                        'TAB: center view on robot',
-                                        '',
-                                        'H: Toggle help'])
+        self._instructions = "\n".join(
+            [
+                "W, S: Move forward, backward",
+                "A, D: Turn left, right",
+                "R, F: Lift up, down",
+                "T, G: Head up, down",
+                "",
+                "C: Connect to LightCube",
+                "",
+                "LMB: Rotate camera",
+                "RMB: Move camera",
+                "LMB + RMB: Move camera up/down",
+                "LMB + Z: Zoom camera",
+                "X: same as RMB",
+                "TAB: center view on robot",
+                "",
+                "H: Toggle help",
+            ]
+        )
 
         self._vector_view_manifest = opengl_vector.VectorViewManifest()
-        self._main_window = opengl.OpenGLWindow(0, 0, resolution[0], resolution[1], b"Vector 3D Visualizer")
+        self._main_window = opengl.OpenGLWindow(
+            0, 0, resolution[0], resolution[1], b"Vector 3D Visualizer"
+        )
 
         # Create a 3d projector configuration class.
         self._projector = projector
         self._camera = camera
         self._lights = lights
 
-        self._view_controller = _OpenGLViewController(self.close, self._camera, self._input_intent_queue, self)
+        self._view_controller = _OpenGLViewController(
+            self.close, self._camera, self._input_intent_queue, self
+        )
 
         self._latest_world_frame: opengl_vector.WorldRenderFrame = None
 
@@ -548,9 +611,9 @@ class OpenGLViewer():
                     obj_matrix = obj_pose.to_matrix()
                     glMultMatrixf(obj_matrix.in_row_order)
 
-                    glScalef(obj.x_size_mm * 0.5,
-                             obj.y_size_mm * 0.5,
-                             obj.z_size_mm * 0.5)
+                    glScalef(
+                        obj.x_size_mm * 0.5, obj.y_size_mm * 0.5, obj.z_size_mm * 0.5
+                    )
 
                     # Only draw solid object for observable custom objects
 
@@ -583,15 +646,19 @@ class OpenGLViewer():
 
                     glPopMatrix()
         except BaseException as e:
-            self._logger.error('rendering error: {0}'.format(e))
+            self._logger.error("rendering error: {0}".format(e))
 
         glDisable(GL_LIGHTING)
 
         # Draw the Vector robot to the screen
-        robot_view.display(robot_frame.pose, robot_frame.head_angle, robot_frame.lift_position)
+        robot_view.display(
+            robot_frame.pose, robot_frame.head_angle, robot_frame.lift_position
+        )
 
         if self.show_controls:
-            self._draw_controls(world_frame.cube_connected(), world_frame.cube_connecting())
+            self._draw_controls(
+                world_frame.cube_connected(), world_frame.cube_connecting()
+            )
 
     def _draw_controls(self, cube_connected, cube_connecting):
         try:
@@ -601,11 +668,35 @@ class OpenGLViewer():
         else:
             _draw_text(GLUT_BITMAP_9_BY_15, self._instructions, x=10, y=10)
             if cube_connecting:
-                _draw_text(GLUT_BITMAP_9_BY_15, "<connecting...>", x=600, y=10, r=0.75, g=0.5, b=0.0)
+                _draw_text(
+                    GLUT_BITMAP_9_BY_15,
+                    "<connecting...>",
+                    x=600,
+                    y=10,
+                    r=0.75,
+                    g=0.5,
+                    b=0.0,
+                )
             elif cube_connected:
-                _draw_text(GLUT_BITMAP_9_BY_15, "<cube connected>", x=600, y=10, r=0.0, g=0.85, b=0.0)
+                _draw_text(
+                    GLUT_BITMAP_9_BY_15,
+                    "<cube connected>",
+                    x=600,
+                    y=10,
+                    r=0.0,
+                    g=0.85,
+                    b=0.0,
+                )
             else:
-                _draw_text(GLUT_BITMAP_9_BY_15, "<no cube connected>", x=600, y=10, r=0.75, g=0.75, b=0.75)
+                _draw_text(
+                    GLUT_BITMAP_9_BY_15,
+                    "<no cube connected>",
+                    x=600,
+                    y=10,
+                    r=0.75,
+                    g=0.75,
+                    b=0.75,
+                )
 
     def _render_3d_view(self, window: opengl.OpenGLWindow):
         """Renders 3d objects to an openGL window
@@ -624,7 +715,9 @@ class OpenGLViewer():
         try:
             world_frame = self._world_frame_queue.get(False)  # type: WorldRenderFrame
             if world_frame is not None:
-                self._view_controller.last_robot_position = world_frame.robot_frame.pose.position
+                self._view_controller.last_robot_position = (
+                    world_frame.robot_frame.pose.position
+                )
             self._latest_world_frame = world_frame
         except mp.queues.Empty:
             world_frame = self._latest_world_frame
@@ -653,8 +746,7 @@ class OpenGLViewer():
         window.display_rendered_content()
 
     def _on_window_update(self):
-        """Top level display call.
-        """
+        """Top level display call."""
         try:
             self._render_3d_view(self._main_window)
 
@@ -663,8 +755,7 @@ class OpenGLViewer():
             self._close_event.set()
 
     def run(self):
-        """Turns control of the current thread over to the OpenGL viewer
-        """
+        """Turns control of the current thread over to the OpenGL viewer"""
         self._main_window.initialize(self._on_window_update)
         self._view_controller.initialize()
 

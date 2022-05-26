@@ -29,17 +29,27 @@ The ImageAnnotator instance can be accessed as
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['DEFAULT_OBJECT_COLORS',
-           'RESAMPLE_MODE_NEAREST', 'RESAMPLE_MODE_BILINEAR',
-           'AnnotationPosition', 'ImageText', 'Annotator',
-           'ObjectAnnotator', 'FaceAnnotator', 'TextAnnotator', 'ImageAnnotator',
-           'add_img_box_to_image', 'add_polygon_to_image', 'annotator']
+__all__ = [
+    "DEFAULT_OBJECT_COLORS",
+    "RESAMPLE_MODE_NEAREST",
+    "RESAMPLE_MODE_BILINEAR",
+    "AnnotationPosition",
+    "ImageText",
+    "Annotator",
+    "ObjectAnnotator",
+    "FaceAnnotator",
+    "TextAnnotator",
+    "ImageAnnotator",
+    "add_img_box_to_image",
+    "add_polygon_to_image",
+    "annotator",
+]
 
 
-from enum import Enum
 import collections
 import functools
 import sys
+from enum import Enum
 from typing import Callable, Iterable, Tuple, Union
 
 try:
@@ -47,17 +57,16 @@ try:
 except ImportError:
     sys.exit("Cannot import from PIL: Do `pip3 install --user Pillow` to install")
 except SyntaxError:
-    sys.exit("SyntaxError: possible if accidentally importing old Python 2 version of PIL")
+    sys.exit(
+        "SyntaxError: possible if accidentally importing old Python 2 version of PIL"
+    )
 
-from . import faces
-from . import objects
-from . import util
-
+from . import faces, objects, util
 
 DEFAULT_OBJECT_COLORS = {
-    objects.LightCube: 'yellow',
-    objects.CustomObject: 'purple',
-    'default': 'red'
+    objects.LightCube: "yellow",
+    objects.CustomObject: "purple",
+    "default": "red",
 }
 
 #: Fastest resampling mode, use nearest pixel
@@ -68,6 +77,7 @@ RESAMPLE_MODE_BILINEAR = Image.BILINEAR
 
 class AnnotationPosition(Enum):
     """Specifies where the annotation must be rendered."""
+
     LEFT = 1
     RIGHT = 2
     TOP = 4
@@ -136,8 +146,17 @@ class ImageText:  # pylint: disable=too-few-public-methods
         outline_color is specified.
     """
 
-    def __init__(self, text: str, position: int = AnnotationPosition.BOTTOM_RIGHT, align: str = "left", color: str = "white",
-                 font=None, line_spacing: int = 3, outline_color: str = None, full_outline: bool = True):
+    def __init__(
+        self,
+        text: str,
+        position: int = AnnotationPosition.BOTTOM_RIGHT,
+        align: str = "left",
+        color: str = "white",
+        font=None,
+        line_spacing: int = 3,
+        outline_color: str = None,
+        full_outline: bool = True,
+    ):
         self.text = text
         self.position = position
         self.align = align
@@ -168,8 +187,14 @@ class ImageText:  # pylint: disable=too-few-public-methods
 
         # helper method for each draw call below
         def _draw_text(pos, color):
-            draw.text(pos, self.text, font=self.font, fill=color,
-                      align=self.align, spacing=self.line_spacing)
+            draw.text(
+                pos,
+                self.text,
+                font=self.font,
+                fill=color,
+                align=self.align,
+                spacing=self.line_spacing,
+            )
 
         if self.outline_color is not None:
             # Pillow doesn't support outlined or shadowed text directly.
@@ -188,7 +213,12 @@ class ImageText:  # pylint: disable=too-few-public-methods
         return draw
 
 
-def add_img_box_to_image(draw: ImageDraw.ImageDraw, box: util.ImageRect, color: str, text: Union[ImageText, Iterable[ImageText]] = None) -> None:
+def add_img_box_to_image(
+    draw: ImageDraw.ImageDraw,
+    box: util.ImageRect,
+    color: str,
+    text: Union[ImageText, Iterable[ImageText]] = None,
+) -> None:
     """Draw a box on an image and optionally add text.
 
     This will draw the outline of a rectangle to the passed in image
@@ -212,7 +242,13 @@ def add_img_box_to_image(draw: ImageDraw.ImageDraw, box: util.ImageRect, color: 
             text.render(draw, (x1, y1, x2, y2))
 
 
-def add_polygon_to_image(draw: ImageDraw.ImageDraw, poly_points: list, scale: float, line_color: str, fill_color: str = None) -> None:
+def add_polygon_to_image(
+    draw: ImageDraw.ImageDraw,
+    poly_points: list,
+    scale: float,
+    line_color: str,
+    fill_color: str = None,
+) -> None:
     """Draw a polygon on an image
 
     This will draw a polygon on the passed-in image in the specified
@@ -244,7 +280,7 @@ def _find_key_for_cls(d, cls):
         result = d.get(c, None)
         if result:
             return result
-    return d['default']
+    return d["default"]
 
 
 class Annotator:
@@ -252,6 +288,7 @@ class Annotator:
 
     Subclasses of Annotator handle applying a single annotation to an image.
     """
+
     #: int: The priority of the annotator - Annotators with higher numbered
     #: priorities are applied first.
     priority = 100
@@ -285,6 +322,7 @@ class ObjectAnnotator(Annotator):  # pylint: disable=too-few-public-methods
     :class:`anki_vector.objects.Charger` and
     :class:`anki_vector.objects.CustomObject`.
     """
+
     priority = 100
     object_colors = DEFAULT_OBJECT_COLORS
 
@@ -316,8 +354,9 @@ class FaceAnnotator(Annotator):  # pylint: disable=too-few-public-methods
 
     This handles the display of :class:`anki_vector.faces.Face` objects.
     """
+
     priority = 100
-    box_color = 'green'
+    box_color = "green"
 
     def __init__(self, img_annotator, box_color=None):
         super().__init__(img_annotator)
@@ -358,8 +397,8 @@ class FaceAnnotator(Annotator):  # pylint: disable=too-few-public-methods
 
 
 class TextAnnotator(Annotator):  # pylint: disable=too-few-public-methods
-    """Adds simple text annotations to a camera image.
-    """
+    """Adds simple text annotations to a camera image."""
+
     priority = 50
 
     def __init__(self, img_annotator, text):
@@ -386,9 +425,11 @@ def annotator(f):
     The wrapped function should have a signature of
     ``(image, scale, img_annotator=None, world=None, **kw)``
     """
+
     @functools.wraps(f)
     def wrapper(img_annotator):
         return _AnnotatorHelper(img_annotator, f)
+
     return wrapper
 
 
@@ -455,18 +496,21 @@ class ImageAnnotator:
 
         self._annotators = {}
         self._sorted_annotators = []
-        self.add_annotator('objects', ObjectAnnotator(self))
-        self.add_annotator('faces', FaceAnnotator(self))
+        self.add_annotator("objects", ObjectAnnotator(self))
+        self.add_annotator("faces", FaceAnnotator(self))
 
         #: If this attribute is set to false, the :meth:`annotate_image` method
         #: will continue to provide a scaled image, but will not apply any annotations.
         self.annotation_enabled = True
 
     def _sort_annotators(self):
-        self._sorted_annotators = sorted(self._annotators.values(),
-                                         key=lambda an: an.priority, reverse=True)
+        self._sorted_annotators = sorted(
+            self._annotators.values(), key=lambda an: an.priority, reverse=True
+        )
 
-    def add_annotator(self, name: str, new_annotator: Union[Annotator, Callable[..., Annotator]]) -> None:
+    def add_annotator(
+        self, name: str, new_annotator: Union[Annotator, Callable[..., Annotator]]
+    ) -> None:
         """Adds a new annotator for display.
 
         Annotators are enabled by default.
@@ -528,7 +572,13 @@ class ImageAnnotator:
         """
         self._annotators[name].enabled = True
 
-    def add_static_text(self, name: str, text: Union[str, ImageText], color: str = 'white', position: int = AnnotationPosition.TOP_LEFT) -> None:
+    def add_static_text(
+        self,
+        name: str,
+        text: Union[str, ImageText],
+        color: str = "white",
+        position: int = AnnotationPosition.TOP_LEFT,
+    ) -> None:
         """Add some static text to annotated images.
 
         This is a convenience method to create a :class:`TextAnnnotator`
@@ -545,7 +595,13 @@ class ImageAnnotator:
             text = ImageText(text, position=position, color=color)
         self.add_annotator(name, TextAnnotator(self, text))
 
-    def annotate_image(self, image: Image.Image, scale: float = None, fit_size: Tuple[int, int] = None, resample_mode: int = RESAMPLE_MODE_NEAREST) -> Image.Image:
+    def annotate_image(
+        self,
+        image: Image.Image,
+        scale: float = None,
+        fit_size: Tuple[int, int] = None,
+        resample_mode: int = RESAMPLE_MODE_NEAREST,
+    ) -> Image.Image:
         """Called by :class:`~anki_vector.camera.CameraComponent` to annotate camera images.
 
         :param image: The image to annotate
@@ -559,8 +615,10 @@ class ImageAnnotator:
             :attr:`RESAMPLE_MODE_BILINEAR` (slower, but smoother).
         """
         if scale is not None and scale != 1:
-            image = image.resize((int(image.width * scale), int(image.height * scale)),
-                                 resample=resample_mode)
+            image = image.resize(
+                (int(image.width * scale), int(image.height * scale)),
+                resample=resample_mode,
+            )
 
         elif fit_size is not None and fit_size != (image.width, image.height):
             img_ratio = image.width / image.height

@@ -16,16 +16,16 @@
 SDK for programming with the Anki Vector robot.
 """
 
-import sys
 import logging
+import sys
 
 from . import messaging
-from .robot import Robot, AsyncRobot
+from .robot import AsyncRobot, Robot
 from .version import __version__
 
-logger = logging.getLogger('vector')  # pylint: disable=invalid-name
+logger = logging.getLogger("vector")  # pylint: disable=invalid-name
 
 if sys.version_info < (3, 6, 1):
     sys.exit('vector requires Python 3.6.1 or later')
 
-__all__ = ['Robot', 'AsyncRobot', 'logger', 'messaging', '__version__']
+__all__ = ["Robot", "AsyncRobot", "logger", "messaging", "__version__"]

@@ -25,14 +25,19 @@ The camera resolution is 1280 x 720 with a field of view of 90 deg (H) x 50 deg 
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ["EvtNewRawCameraImage", "EvtNewCameraImage",
-           "CameraComponent", "CameraConfig", "CameraImage"]
+__all__ = [
+    "EvtNewRawCameraImage",
+    "EvtNewCameraImage",
+    "CameraComponent",
+    "CameraConfig",
+    "CameraImage",
+]
 
 import asyncio
-from concurrent.futures import CancelledError
 import io
-import time
 import sys
+import time
+from concurrent.futures import CancelledError
 
 from . import annotate, connection, util
 from .events import Events
@@ -83,7 +88,12 @@ class CameraImage:
     :param image_id: An image number that increments on every new image received.
     """
 
-    def __init__(self, raw_image: Image.Image, image_annotator: annotate.ImageAnnotator, image_id: int):
+    def __init__(
+        self,
+        raw_image: Image.Image,
+        image_annotator: annotate.ImageAnnotator,
+        image_id: int,
+    ):
 
         self._raw_image = raw_image
         self._image_annotator = image_annotator
@@ -105,7 +115,12 @@ class CameraImage:
         """The time the image was received and processed by the SDK."""
         return self._image_recv_time
 
-    def annotate_image(self, scale: float = None, fit_size: tuple = None, resample_mode: int = annotate.RESAMPLE_MODE_NEAREST) -> Image.Image:
+    def annotate_image(
+        self,
+        scale: float = None,
+        fit_size: tuple = None,
+        resample_mode: int = annotate.RESAMPLE_MODE_NEAREST,
+    ) -> Image.Image:
         """Adds any enabled annotations to the image.
         Optionally resizes the image prior to annotations being applied.  The
         aspect ratio of the resulting image always matches that of the raw image.
@@ -130,15 +145,16 @@ class CameraImage:
             but smoother).
         """
         if self._raw_image.size != (640, 360):
-            raise VectorCameraImageCaptureException("Annotation is only supported for default resolution images.")
-        return self._image_annotator.annotate_image(self._raw_image,
-                                                    scale=scale,
-                                                    fit_size=fit_size,
-                                                    resample_mode=resample_mode)
+            raise VectorCameraImageCaptureException(
+                "Annotation is only supported for default resolution images."
+            )
+        return self._image_annotator.annotate_image(
+            self._raw_image, scale=scale, fit_size=fit_size, resample_mode=resample_mode
+        )
 
 
 class CameraConfig:
-    """ The fixed properties for Vector's camera.
+    """The fixed properties for Vector's camera.
 
     A full 3x3 calibration matrix for doing 3D reasoning based on the camera
     images would look like:
@@ -161,17 +177,19 @@ class CameraConfig:
             print(f"Robot camera allowable exposure gain range is from {min} to {max}")
     """
 
-    def __init__(self,
-                 focal_length_x: float,
-                 focal_length_y: float,
-                 center_x: float,
-                 center_y: float,
-                 fov_x: float,
-                 fov_y: float,
-                 min_exposure_time_ms: int,
-                 max_exposure_time_ms: int,
-                 min_gain: float,
-                 max_gain: float):
+    def __init__(
+        self,
+        focal_length_x: float,
+        focal_length_y: float,
+        center_x: float,
+        center_y: float,
+        fov_x: float,
+        fov_y: float,
+        min_exposure_time_ms: int,
+        max_exposure_time_ms: int,
+        min_gain: float,
+        max_gain: float,
+    ):
         self._focal_length = util.Vector2(focal_length_x, focal_length_y)
         self._center = util.Vector2(center_x, center_y)
         self._fov_x = util.degrees(fov_x)
@@ -183,17 +201,19 @@ class CameraConfig:
 
     @classmethod
     def create_from_message(cls, msg: protocol.CameraConfigResponse):
-        """Create camera configuration based on Vector's camera configuration from the message sent from the Robot """
-        return cls(msg.focal_length_x,
-                   msg.focal_length_y,
-                   msg.center_x,
-                   msg.center_y,
-                   msg.fov_x,
-                   msg.fov_y,
-                   msg.min_camera_exposure_time_ms,
-                   msg.max_camera_exposure_time_ms,
-                   msg.min_camera_gain,
-                   msg.max_camera_gain)
+        """Create camera configuration based on Vector's camera configuration from the message sent from the Robot"""
+        return cls(
+            msg.focal_length_x,
+            msg.focal_length_y,
+            msg.center_x,
+            msg.center_y,
+            msg.fov_x,
+            msg.fov_y,
+            msg.min_camera_exposure_time_ms,
+            msg.max_camera_exposure_time_ms,
+            msg.min_camera_gain,
+            msg.max_camera_gain,
+        )
 
     @property
     def min_gain(self) -> float:
@@ -274,7 +294,9 @@ class CameraComponent(util.Component):
     def __init__(self, robot):
         super().__init__(robot)
 
-        self._image_annotator: annotate.ImageAnnotator = self.annotator_factory(self.robot.world)
+        self._image_annotator: annotate.ImageAnnotator = self.annotator_factory(
+            self.robot.world
+        )
         self._latest_image: CameraImage = None
         self._latest_image_id: int = None
         self._camera_feed_task: asyncio.Task = None
@@ -285,15 +307,15 @@ class CameraComponent(util.Component):
         self._auto_exposure_enabled = True
 
     def set_config(self, message: protocol.CameraConfigRequest):
-        """Update Vector's camera configuration from the message sent from the Robot """
+        """Update Vector's camera configuration from the message sent from the Robot"""
         try:
             self._config = CameraConfig.create_from_message(message)
         except:
-            self._config = CameraConfig(0,0,0,0,0,0,0,0,0,0)
+            self._config = CameraConfig(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
     @connection.on_connection_thread(requires_control=False)
     async def get_camera_config(self) -> protocol.CameraConfigResponse:
-        """ Get Vector's camera configuration
+        """Get Vector's camera configuration
 
         Retrieves the calibrated camera settings.  This is called during the Robot connection initialization, SDK
         users should use the `config` property in most instances.
@@ -412,7 +434,9 @@ class CameraComponent(util.Component):
         """
         if not self._camera_feed_task or self._camera_feed_task.done():
             self._enabled = True
-            self._camera_feed_task = self.conn.loop.create_task(self._request_and_handle_images())
+            self._camera_feed_task = self.conn.loop.create_task(
+                self._request_and_handle_images()
+            )
 
     def close_camera_feed(self) -> None:
         """Cancel camera feed task."""
@@ -423,7 +447,9 @@ class CameraComponent(util.Component):
             try:
                 future.result()
             except CancelledError:
-                self.logger.debug('Camera feed task was cancelled. This is expected during disconnection.')
+                self.logger.debug(
+                    "Camera feed task was cancelled. This is expected during disconnection."
+                )
             # wait for streaming to end, up to 10 seconds
             iterations = 0
             max_iterations = 100
@@ -435,8 +461,10 @@ class CameraComponent(util.Component):
                     # because other SDK functions will still work and
                     # the RPC should have had enough time to finish
                     # which means we _should_ be in a good state.
-                    self.logger.info('Camera Feed closed, but streaming on'
-                                     ' robot remained enabled.  This is unexpected.')
+                    self.logger.info(
+                        "Camera Feed closed, but streaming on"
+                        " robot remained enabled.  This is unexpected."
+                    )
                     break
             self._camera_feed_task = None
 
@@ -472,10 +500,16 @@ class CameraComponent(util.Component):
         self._latest_image = CameraImage(image, self._image_annotator, msg.image_id)
         self._latest_image_id = msg.image_id
 
-        self.conn.run_soon(self.robot.events.dispatch_event(EvtNewRawCameraImage(image),
-                                                            Events.new_raw_camera_image))
-        self.conn.run_soon(self.robot.events.dispatch_event(EvtNewCameraImage(self._latest_image),
-                                                            Events.new_camera_image))
+        self.conn.run_soon(
+            self.robot.events.dispatch_event(
+                EvtNewRawCameraImage(image), Events.new_raw_camera_image
+            )
+        )
+        self.conn.run_soon(
+            self.robot.events.dispatch_event(
+                EvtNewCameraImage(self._latest_image), Events.new_camera_image
+            )
+        )
 
         if self._image_annotator.annotation_enabled:
             image = self._image_annotator.annotate_image(image)
@@ -490,14 +524,20 @@ class CameraComponent(util.Component):
                 # If the camera feed is disabled after stream is setup, exit the stream
                 # (the camera feed on the robot is disabled internally on stream exit)
                 if not self._enabled:
-                    self.logger.warning('Camera feed has been disabled. Enable the feed to start/continue receiving camera feed data')
+                    self.logger.warning(
+                        "Camera feed has been disabled. Enable the feed to start/continue receiving camera feed data"
+                    )
                     return
                 self._unpack_image(evt)
         except CancelledError:
-            self.logger.debug('Camera feed task was cancelled. This is expected during disconnection.')
+            self.logger.debug(
+                "Camera feed task was cancelled. This is expected during disconnection."
+            )
 
     @connection.on_connection_thread()
-    async def capture_single_image(self, enable_high_resolution: bool = False) -> CameraImage:
+    async def capture_single_image(
+        self, enable_high_resolution: bool = False
+    ) -> CameraImage:
         """Request to capture a single image from the robot's camera.
 
         This call requests the robot to capture an image and returns the
@@ -518,20 +558,28 @@ class CameraComponent(util.Component):
                                        is 640x360, while the high resolution is 1280x720.
         """
         if self._enabled:
-            self.logger.warning('Camera feed is enabled. Receiving image from the feed at default resolution.')
+            self.logger.warning(
+                "Camera feed is enabled. Receiving image from the feed at default resolution."
+            )
             return self._latest_image
         if enable_high_resolution:
-            self.logger.warning('Capturing a high resolution (1280*720) image. Image events for this frame need to be scaled.')
-        req = protocol.CaptureSingleImageRequest(enable_high_resolution=enable_high_resolution)
+            self.logger.warning(
+                "Capturing a high resolution (1280*720) image. Image events for this frame need to be scaled."
+            )
+        req = protocol.CaptureSingleImageRequest(
+            enable_high_resolution=enable_high_resolution
+        )
         res = await self.grpc_interface.CaptureSingleImage(req)
         if res and res.data:
             image = _convert_to_pillow_image(res.data)
             return CameraImage(image, self._image_annotator, res.image_id)
 
-        self.logger.error('Failed to capture a single image')
+        self.logger.error("Failed to capture a single image")
 
     @connection.on_connection_thread()
-    async def enable_auto_exposure(self, enable_auto_exposure=True) -> protocol.SetCameraSettingsResponse:
+    async def enable_auto_exposure(
+        self, enable_auto_exposure=True
+    ) -> protocol.SetCameraSettingsResponse:
         """Enable auto exposure on Vector's Camera.
 
         Enable auto exposure on Vector's camera to constantly update the exposure
@@ -549,13 +597,19 @@ class CameraComponent(util.Component):
         :param enable_auto_exposure: whether the camera should automatically adjust exposure
         """
 
-        set_camera_settings_request = protocol.SetCameraSettingsRequest(enable_auto_exposure=enable_auto_exposure)
-        result = await self.conn.grpc_interface.SetCameraSettings(set_camera_settings_request)
+        set_camera_settings_request = protocol.SetCameraSettingsRequest(
+            enable_auto_exposure=enable_auto_exposure
+        )
+        result = await self.conn.grpc_interface.SetCameraSettings(
+            set_camera_settings_request
+        )
         self._auto_exposure_enabled = enable_auto_exposure
         return result
 
     @connection.on_connection_thread()
-    async def set_manual_exposure(self, exposure_ms: int, gain: float) -> protocol.SetCameraSettingsResponse:
+    async def set_manual_exposure(
+        self, exposure_ms: int, gain: float
+    ) -> protocol.SetCameraSettingsResponse:
         """Set manual exposure values for Vector's Camera.
 
         This will disable auto exposure on Vector's camera and force the specified exposure
@@ -580,16 +634,20 @@ class CameraComponent(util.Component):
 
         """
 
-        if exposure_ms < self._config.min_exposure_time_ms \
-                or exposure_ms > self._config.max_exposure_time_ms \
-                or gain < self._config.min_gain \
-                or gain > self._config.max_gain:
+        if (
+            exposure_ms < self._config.min_exposure_time_ms
+            or exposure_ms > self._config.max_exposure_time_ms
+            or gain < self._config.min_gain
+            or gain > self._config.max_gain
+        ):
             raise ValueError("Exposure settings out of range")
 
-        set_camera_settings_request = protocol.SetCameraSettingsRequest(gain=gain,
-                                                                        exposure_ms=exposure_ms,
-                                                                        enable_auto_exposure=False)
-        result = await self.conn.grpc_interface.SetCameraSettings(set_camera_settings_request)
+        set_camera_settings_request = protocol.SetCameraSettingsRequest(
+            gain=gain, exposure_ms=exposure_ms, enable_auto_exposure=False
+        )
+        result = await self.conn.grpc_interface.SetCameraSettings(
+            set_camera_settings_request
+        )
         self._gain = gain
         self._exposure_ms = exposure_ms
         self._auto_exposure_enabled = False

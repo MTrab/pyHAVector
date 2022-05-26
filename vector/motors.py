@@ -17,7 +17,7 @@ Control the motors of Vector.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['MotorComponent']
+__all__ = ["MotorComponent"]
 
 from . import connection, util
 from .messaging import protocol
@@ -25,12 +25,15 @@ from .messaging import protocol
 
 class MotorComponent(util.Component):
     """Controls the low-level motor functions."""
+
     @connection.on_connection_thread()
-    async def set_wheel_motors(self,
-                               left_wheel_speed: float,
-                               right_wheel_speed: float,
-                               left_wheel_accel: float = 0.0,
-                               right_wheel_accel: float = 0.0):
+    async def set_wheel_motors(
+        self,
+        left_wheel_speed: float,
+        right_wheel_speed: float,
+        left_wheel_accel: float = 0.0,
+        right_wheel_accel: float = 0.0,
+    ):
         """Tell Vector to move his wheels / treads at a given speed.
 
         The wheels will continue to move at that speed until commanded to drive
@@ -54,15 +57,16 @@ class MotorComponent(util.Component):
         :param right_wheel_accel: Acceleration of right tread (in millimeters per second squared)
                             ``None`` value defaults this to the same as r_wheel_speed.
         """
-        motors = protocol.DriveWheelsRequest(left_wheel_mmps=left_wheel_speed,
-                                             right_wheel_mmps=right_wheel_speed,
-                                             left_wheel_mmps2=left_wheel_accel,
-                                             right_wheel_mmps2=right_wheel_accel)
+        motors = protocol.DriveWheelsRequest(
+            left_wheel_mmps=left_wheel_speed,
+            right_wheel_mmps=right_wheel_speed,
+            left_wheel_mmps2=left_wheel_accel,
+            right_wheel_mmps2=right_wheel_accel,
+        )
         return await self.grpc_interface.DriveWheels(motors)
 
     @connection.on_connection_thread()
-    async def set_head_motor(self,
-                             speed: float):
+    async def set_head_motor(self, speed: float):
         """Tell Vector's head motor to move with a certain speed.
 
         Positive speed for up, negative speed for down. Measured in radians per second.
@@ -82,8 +86,7 @@ class MotorComponent(util.Component):
         return await self.grpc_interface.MoveHead(set_head_request)
 
     @connection.on_connection_thread()
-    async def set_lift_motor(self,
-                             speed: float):
+    async def set_lift_motor(self, speed: float):
         """Tell Vector's lift motor to move with a certain speed.
 
         Positive speed for up, negative speed for down. Measured in radians per second.

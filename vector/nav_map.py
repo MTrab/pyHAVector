@@ -27,9 +27,13 @@ with a positive frequency so that the data is streamed to the SDK.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['EvtNavMapUpdate',
-           'NavMapComponent', 'NavMapGrid', 'NavMapGridNode',
-           'NavNodeContentTypes']
+__all__ = [
+    "EvtNavMapUpdate",
+    "NavMapComponent",
+    "NavMapGrid",
+    "NavMapGridNode",
+    "NavNodeContentTypes",
+]
 
 import asyncio
 from concurrent.futures import CancelledError
@@ -43,7 +47,7 @@ from .exceptions import VectorException
 from .messaging import protocol
 
 
-class EvtNavMapUpdate():  # pylint: disable=too-few-public-methods
+class EvtNavMapUpdate:  # pylint: disable=too-few-public-methods
     """Dispatched when a new nav map is received.
 
     :param nav_map: The current state of the robot's nav map.
@@ -54,8 +58,7 @@ class EvtNavMapUpdate():  # pylint: disable=too-few-public-methods
 
 
 class NavNodeContentTypes(Enum):  # pylint: disable=too-few-public-methods
-    """The content types for a :class:`NavMapGridNode`.
-    """
+    """The content types for a :class:`NavMapGridNode`."""
 
     #: The contents of the node is unknown.
     Unknown = protocol.NavNodeContentType.Value("NAV_NODE_UNKNOWN")
@@ -75,10 +78,14 @@ class NavNodeContentTypes(Enum):  # pylint: disable=too-few-public-methods
     ObstacleProximity = protocol.NavNodeContentType.Value("NAV_NODE_OBSTACLE_PROXIMITY")
 
     #: The node contains a proximity detected obstacle which has been explored.
-    ObstacleProximityExplored = protocol.NavNodeContentType.Value("NAV_NODE_OBSTACLE_PROXIMITY_EXPLORED")
+    ObstacleProximityExplored = protocol.NavNodeContentType.Value(
+        "NAV_NODE_OBSTACLE_PROXIMITY_EXPLORED"
+    )
 
     #: The node contains an unrecognized obstacle.
-    ObstacleUnrecognized = protocol.NavNodeContentType.Value("NAV_NODE_OBSTACLE_UNRECOGNIZED")
+    ObstacleUnrecognized = protocol.NavNodeContentType.Value(
+        "NAV_NODE_OBSTACLE_UNRECOGNIZED"
+    )
 
     #: The node contains a cliff (a sharp drop).
     Cliff = protocol.NavNodeContentType.Value("NAV_NODE_CLIFF")
@@ -87,7 +94,9 @@ class NavNodeContentTypes(Enum):  # pylint: disable=too-few-public-methods
     InterestingEdge = protocol.NavNodeContentType.Value("NAV_NODE_INTERESTING_EDGE")
 
     # This entry is undocumented and not currently used
-    NonInterestingEdge = protocol.NavNodeContentType.Value("NAV_NODE_NON_INTERESTING_EDGE")
+    NonInterestingEdge = protocol.NavNodeContentType.Value(
+        "NAV_NODE_NON_INTERESTING_EDGE"
+    )
 
 
 class NavMapGridNode:
@@ -107,7 +116,14 @@ class NavMapGridNode:
         +---+----+---+
     """
 
-    def __init__(self, depth: int, size: float, center: util.Vector3, parent: 'NavMapGridNode', logger: Logger):
+    def __init__(
+        self,
+        depth: int,
+        size: float,
+        center: util.Vector3,
+        parent: "NavMapGridNode",
+        logger: Logger,
+    ):
         #: The depth of this node (i.e. how far down the quad-tree it is).
         self.depth = depth
 
@@ -132,8 +148,12 @@ class NavMapGridNode:
         self._logger = logger
 
     def __repr__(self):
-        return '<%s center: %s size: %s content: %s>' % (
-            self.__class__.__name__, self.center, self.size, self.content)
+        return "<%s center: %s size: %s content: %s>" % (
+            self.__class__.__name__,
+            self.center,
+            self.size,
+            self.content,
+        )
 
     def contains_point(self, x: float, y: float) -> bool:
         """Test if the node contains the given x,y coordinates.
@@ -149,7 +169,9 @@ class NavMapGridNode:
         dist_y = abs(self.center.y - y)
         return (dist_x <= half_size) and (dist_y <= half_size)
 
-    def _get_node(self, x: float, y: float, assumed_in_bounds: bool) -> 'NavMapGridNode':
+    def _get_node(
+        self, x: float, y: float, assumed_in_bounds: bool
+    ) -> "NavMapGridNode":
         if not assumed_in_bounds and not self.contains_point(x, y):
             # point is out of bounds
             return None
@@ -163,7 +185,7 @@ class NavMapGridNode:
         # child node is by definition in bounds / on boundary
         return child_node._get_node(x, y, True)  # pylint: disable=protected-access
 
-    def get_node(self, x: float, y: float) -> 'NavMapGridNode':
+    def get_node(self, x: float, y: float) -> "NavMapGridNode":
         """Get the node at the given x,y coordinates.
 
         :param x: x coordinate for the point.
@@ -208,12 +230,20 @@ class NavMapGridNode:
         if depth > self.depth:
             self._logger.error("NavMapGridNode depth %s > %s", depth, self.depth)
         if self._next_child > 3:
-            self._logger.error("NavMapGridNode _next_child %s (>3) at depth %s", self._next_child, self.depth)
+            self._logger.error(
+                "NavMapGridNode _next_child %s (>3) at depth %s",
+                self._next_child,
+                self.depth,
+            )
 
         if self.depth == depth:
             if self.content is not None:
-                self._logger.error("NavMapGridNode: Clobbering %s at depth %s with %s",
-                                   self.content, self.depth, content)
+                self._logger.error(
+                    "NavMapGridNode: Clobbering %s at depth %s with %s",
+                    self.content,
+                    self.depth,
+                    content,
+                )
             self.content = content
             # This node won't be further subdivided, and is now full
             return True
@@ -223,14 +253,24 @@ class NavMapGridNode:
             next_depth = self.depth - 1
             next_size = self.size * 0.5
             offset = next_size * 0.5
-            center1 = util.Vector3(self.center.x + offset, self.center.y + offset, self.center.z)
-            center2 = util.Vector3(self.center.x + offset, self.center.y - offset, self.center.z)
-            center3 = util.Vector3(self.center.x - offset, self.center.y + offset, self.center.z)
-            center4 = util.Vector3(self.center.x - offset, self.center.y - offset, self.center.z)
-            self.children = [NavMapGridNode(next_depth, next_size, center1, self, self._logger),
-                             NavMapGridNode(next_depth, next_size, center2, self, self._logger),
-                             NavMapGridNode(next_depth, next_size, center3, self, self._logger),
-                             NavMapGridNode(next_depth, next_size, center4, self, self._logger)]
+            center1 = util.Vector3(
+                self.center.x + offset, self.center.y + offset, self.center.z
+            )
+            center2 = util.Vector3(
+                self.center.x + offset, self.center.y - offset, self.center.z
+            )
+            center3 = util.Vector3(
+                self.center.x - offset, self.center.y + offset, self.center.z
+            )
+            center4 = util.Vector3(
+                self.center.x - offset, self.center.y - offset, self.center.z
+            )
+            self.children = [
+                NavMapGridNode(next_depth, next_size, center1, self, self._logger),
+                NavMapGridNode(next_depth, next_size, center2, self, self._logger),
+                NavMapGridNode(next_depth, next_size, center3, self, self._logger),
+                NavMapGridNode(next_depth, next_size, center4, self, self._logger),
+            ]
         if self.children[self._next_child].add_child(content, depth):
             # Child node is now full, start using the next child
             self._next_child += 1
@@ -251,16 +291,29 @@ class NavMapGrid:
         #: objects of the same origin ID are in the same coordinate frame and
         #: can therefore be compared.
         self.origin_id = msg.origin_id
-        root_center = util.Vector3(msg.map_info.root_center_x, msg.map_info.root_center_y, msg.map_info.root_center_z)
-        self._root_node = NavMapGridNode(msg.map_info.root_depth, msg.map_info.root_size_mm, root_center, None, logger)
+        root_center = util.Vector3(
+            msg.map_info.root_center_x,
+            msg.map_info.root_center_y,
+            msg.map_info.root_center_z,
+        )
+        self._root_node = NavMapGridNode(
+            msg.map_info.root_depth,
+            msg.map_info.root_size_mm,
+            root_center,
+            None,
+            logger,
+        )
         for quad in msg.quad_infos:
             self.add_quad(quad.content, quad.depth)
 
         self._logger = logger
 
     def __repr__(self):
-        return '<%s center: %s size: %s>' % (
-            self.__class__.__name__, self.center, self.size)
+        return "<%s center: %s size: %s>" % (
+            self.__class__.__name__,
+            self.center,
+            self.size,
+        )
 
     @property
     def root_node(self) -> NavMapGridNode:
@@ -375,7 +428,9 @@ class NavMapComponent(util.Component):
                 latest_nav_map = robot.nav_map.latest_nav_map
         """
         if not self._nav_map_feed_task or self._nav_map_feed_task.done():
-            raise VectorException("Nav map not initialized. Check that Robot parameter enable_nav_map_feed is set to True.")
+            raise VectorException(
+                "Nav map not initialized. Check that Robot parameter enable_nav_map_feed is set to True."
+            )
         return self._latest_nav_map
 
     def init_nav_map_feed(self, frequency: float = 0.5) -> None:
@@ -384,7 +439,9 @@ class NavMapComponent(util.Component):
         :param frequency: How frequently to send nav map updates.
         """
         if not self._nav_map_feed_task or self._nav_map_feed_task.done():
-            self._nav_map_feed_task = self.conn.loop.create_task(self._request_and_handle_nav_maps(frequency))
+            self._nav_map_feed_task = self.conn.loop.create_task(
+                self._request_and_handle_nav_maps(frequency)
+            )
 
     def close_nav_map_feed(self) -> None:
         """Cancel nav map feed task."""
@@ -406,4 +463,6 @@ class NavMapComponent(util.Component):
                 self._latest_nav_map = NavMapGrid(evt, self.logger)
                 await self._robot.events.dispatch_event(evt, Events.nav_map_update)
         except CancelledError:
-            self.logger.debug('Nav Map feed task was cancelled. This is expected during disconnection.')
+            self.logger.debug(
+                "Nav Map feed task was cancelled. This is expected during disconnection."
+            )

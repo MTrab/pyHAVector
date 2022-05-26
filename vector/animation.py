@@ -106,7 +106,9 @@ class AnimationComponent(util.Component):
                     print(anim_trigger_name)
         """
         if not self._anim_trigger_dict:
-            self.logger.warning("Anim trigger list was empty. Lazy-loading anim trigger list now.")
+            self.logger.warning(
+                "Anim trigger list was empty. Lazy-loading anim trigger list now."
+            )
             result = self.load_animation_trigger_list()
             if isinstance(result, concurrent.futures.Future):
                 result.result()
@@ -126,20 +128,26 @@ class AnimationComponent(util.Component):
             self.logger.warning("Anim list was empty. Lazy-loading anim list now.")
             await self._load_animation_list()
         if not self._anim_trigger_dict:
-            self.logger.warning("Anim trigger list was empty. Lazy-loading anim trigger list now.")
+            self.logger.warning(
+                "Anim trigger list was empty. Lazy-loading anim trigger list now."
+            )
             await self._load_animation_trigger_list()
 
     async def _load_animation_list(self):
         req = protocol.ListAnimationsRequest()
         result = await self.grpc_interface.ListAnimations(req, timeout=10)
-        self.logger.debug(f"Animation List status={text_format.MessageToString(result.status, as_one_line=True)}, number of animations={len(result.animation_names)}")
+        self.logger.debug(
+            f"Animation List status={text_format.MessageToString(result.status, as_one_line=True)}, number of animations={len(result.animation_names)}"
+        )
         self._anim_dict = {a.name: a for a in result.animation_names}
         return result
 
     async def _load_animation_trigger_list(self):
         req = protocol.ListAnimationTriggersRequest()
         result = await self.grpc_interface.ListAnimationTriggers(req, timeout=10)
-        self.logger.debug(f"Animation Triggers List status={text_format.MessageToString(result.status, as_one_line=True)}, number of animation_triggers={len(result.animation_trigger_names)}")
+        self.logger.debug(
+            f"Animation Triggers List status={text_format.MessageToString(result.status, as_one_line=True)}, number of animation_triggers={len(result.animation_trigger_names)}"
+        )
         self._anim_trigger_dict = {a.name: a for a in result.animation_trigger_names}
         return result
 
@@ -198,7 +206,15 @@ class AnimationComponent(util.Component):
 
     # TODO: add return type hint
     @connection.on_connection_thread()
-    async def play_animation_trigger(self, anim_trigger: str, loop_count: int = 1, use_lift_safe: bool = False, ignore_body_track: bool = False, ignore_head_track: bool = False, ignore_lift_track: bool = False):  # START
+    async def play_animation_trigger(
+        self,
+        anim_trigger: str,
+        loop_count: int = 1,
+        use_lift_safe: bool = False,
+        ignore_body_track: bool = False,
+        ignore_head_track: bool = False,
+        ignore_lift_track: bool = False,
+    ):  # START
         """Starts an animation trigger playing on a robot.
 
         Playing a trigger requests that an animation of a certain class starts playing, rather than an exact
@@ -224,19 +240,30 @@ class AnimationComponent(util.Component):
         if not isinstance(anim_trigger, protocol.AnimationTrigger):
             await self._ensure_loaded()
             if anim_trigger not in self.anim_trigger_list:
-                raise exceptions.VectorException(f"Unknown animation trigger: {anim_trigger}")
+                raise exceptions.VectorException(
+                    f"Unknown animation trigger: {anim_trigger}"
+                )
             animation_trigger = self._anim_trigger_dict[anim_trigger]
-        req = protocol.PlayAnimationTriggerRequest(animation_trigger=animation_trigger,
-                                                   loops=loop_count,
-                                                   use_lift_safe=use_lift_safe,
-                                                   ignore_body_track=ignore_body_track,
-                                                   ignore_head_track=ignore_head_track,
-                                                   ignore_lift_track=ignore_lift_track)
+        req = protocol.PlayAnimationTriggerRequest(
+            animation_trigger=animation_trigger,
+            loops=loop_count,
+            use_lift_safe=use_lift_safe,
+            ignore_body_track=ignore_body_track,
+            ignore_head_track=ignore_head_track,
+            ignore_lift_track=ignore_lift_track,
+        )
         return await self.grpc_interface.PlayAnimationTrigger(req)
 
     # TODO: add return type hint
     @connection.on_connection_thread()
-    async def play_animation(self, anim: str, loop_count: int = 1, ignore_body_track: bool = False, ignore_head_track: bool = False, ignore_lift_track: bool = False):
+    async def play_animation(
+        self,
+        anim: str,
+        loop_count: int = 1,
+        ignore_body_track: bool = False,
+        ignore_head_track: bool = False,
+        ignore_lift_track: bool = False,
+    ):
         """Starts an animation playing on a robot.
 
         Vector must be off of the charger to play an animation.
@@ -264,9 +291,11 @@ class AnimationComponent(util.Component):
             if anim not in self.anim_list:
                 raise exceptions.VectorException(f"Unknown animation: {anim}")
             animation = self._anim_dict[anim]
-        req = protocol.PlayAnimationRequest(animation=animation,
-                                            loops=loop_count,
-                                            ignore_body_track=ignore_body_track,
-                                            ignore_head_track=ignore_head_track,
-                                            ignore_lift_track=ignore_lift_track)
+        req = protocol.PlayAnimationRequest(
+            animation=animation,
+            loops=loop_count,
+            ignore_body_track=ignore_body_track,
+            ignore_head_track=ignore_head_track,
+            ignore_lift_track=ignore_lift_track,
+        )
         return await self.grpc_interface.PlayAnimation(req)
