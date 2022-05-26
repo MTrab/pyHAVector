@@ -17,39 +17,42 @@ Management of the connection to and from Vector.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['ControlPriorityLevel', 'Connection', 'on_connection_thread']
+__all__ = ["ControlPriorityLevel", "Connection", "on_connection_thread"]
 
 import asyncio
-from concurrent import futures
-from enum import Enum
 import functools
 import inspect
 import logging
 import platform
 import sys
 import threading
+from concurrent import futures
+from enum import Enum
 from typing import Any, Awaitable, Callable, Coroutine, Dict, List
 
-from google.protobuf.text_format import MessageToString
-import grpc
 import aiogrpc
+import grpc
+from google.protobuf.text_format import MessageToString
 
 from . import util
 from .escapepod import EscapePod
-from .exceptions import (connection_error,
-                         VectorAsyncException,
-                         VectorBehaviorControlException,
-                         VectorConfigurationException,
-                         VectorControlException,
-                         VectorControlTimeoutException,
-                         VectorInvalidVersionException,
-                         VectorNotFoundException)
+from .exceptions import (
+    VectorAsyncException,
+    VectorBehaviorControlException,
+    VectorConfigurationException,
+    VectorControlException,
+    VectorControlTimeoutException,
+    VectorInvalidVersionException,
+    VectorNotFoundException,
+    connection_error,
+)
 from .messaging import client, protocol
 from .version import __version__
 
 
 class CancelType(Enum):
-    """Enum used to specify cancellation options for behaviors -- internal use only """
+    """Enum used to specify cancellation options for behaviors -- internal use only"""
+
     #: Cancellable as an 'Action'
     CANCELLABLE_ACTION = 0
     #: Cancellable as a 'Behavior'
@@ -58,15 +61,20 @@ class CancelType(Enum):
 
 class ControlPriorityLevel(Enum):
     """Enum used to specify the priority level for the program."""
+
     #: Runs above mandatory physical reactions, will drive off table, perform while on a slope,
     #: ignore low battery state, work in the dark, etc.
-    OVERRIDE_BEHAVIORS_PRIORITY = protocol.ControlRequest.OVERRIDE_BEHAVIORS  # pylint: disable=no-member
+    OVERRIDE_BEHAVIORS_PRIORITY = (
+        protocol.ControlRequest.OVERRIDE_BEHAVIORS
+    )  # pylint: disable=no-member
     #: Runs below Mandatory Physical Reactions such as tucking Vector's head and arms during a fall,
     #: yet above Trigger-Word Detection.  Default for normal operation.
     DEFAULT_PRIORITY = protocol.ControlRequest.DEFAULT  # pylint: disable=no-member
     #: Holds control of robot before/after other SDK connections
     #: Used to disable idle behaviors.  Not to be used for regular behavior control.
-    RESERVE_CONTROL = protocol.ControlRequest.RESERVE_CONTROL  # pylint: disable=no-member
+    RESERVE_CONTROL = (
+        protocol.ControlRequest.RESERVE_CONTROL
+    )  # pylint: disable=no-member
 
 
 class _ControlEventManager:
@@ -82,7 +90,9 @@ class _ControlEventManager:
     :class:`request_event` Is a way of alerting :class:`Connection` to request control.
     """
 
-    def __init__(self, loop: asyncio.BaseEventLoop = None, priority: ControlPriorityLevel = None):
+    def __init__(
+        self, loop: asyncio.BaseEventLoop = None, priority: ControlPriorityLevel = None
+    ):
         self._granted_event = asyncio.Event(loop=loop)
         self._lost_event = asyncio.Event(loop=loop)
         self._request_event = asyncio.Event(loop=loop)
@@ -120,7 +130,9 @@ class _ControlEventManager:
         """Detect if the behavior control stream is supposed to shut down."""
         return self._is_shutdown
 
-    def request(self, priority: ControlPriorityLevel = ControlPriorityLevel.DEFAULT_PRIORITY) -> None:
+    def request(
+        self, priority: ControlPriorityLevel = ControlPriorityLevel.DEFAULT_PRIORITY
+    ) -> None:
         """Tell the behavior stream to request control via setting the :class:`request_event`.
 
         This will signal Connection's :func:`_request_handler` generator to send a request control message on the BehaviorControl stream.
@@ -130,7 +142,10 @@ class _ControlEventManager:
             interrupt the SDK execution. See :class:`ControlPriorityLevel` for more information.
         """
         if priority is None:
-            raise VectorBehaviorControlException("Must provide a priority level to request. To disable control, use {}.release().", self.__class__.__name__)
+            raise VectorBehaviorControlException(
+                "Must provide a priority level to request. To disable control, use {}.release().",
+                self.__class__.__name__,
+            )
         self._priority = priority
         self._request_event.set()
 
@@ -207,7 +222,15 @@ class Connection:
                                    requires behavior control, or None to decline control.
     """
 
-    def __init__(self, name: str, host: str, cert_file: str, guid: str, escape_pod: bool = False, behavior_control_level: ControlPriorityLevel = ControlPriorityLevel.DEFAULT_PRIORITY):
+    def __init__(
+        self,
+        name: str,
+        host: str,
+        cert_file: str,
+        guid: str,
+        escape_pod: bool = False,
+        behavior_control_level: ControlPriorityLevel = ControlPriorityLevel.DEFAULT_PRIORITY,
+    ):
         self._loop: asyncio.BaseEventLoop = None
         self.name = name
         self.host = host
@@ -246,7 +269,9 @@ class Connection:
         :returns: The loop running inside the connection thread
         """
         if self._loop is None:
-            raise VectorAsyncException("Attempted to access the connection loop before it was ready")
+            raise VectorAsyncException(
+                "Attempted to access the connection loop before it was ready"
+            )
         return self._loop
 
     @property
@@ -268,7 +293,9 @@ class Connection:
         :returns: The connection thread where all of the grpc messages are being processed.
         """
         if self._thread is None:
-            raise VectorAsyncException("Attempted to access the connection loop before it was ready")
+            raise VectorAsyncException(
+                "Attempted to access the connection loop before it was ready"
+            )
         return self._thread
 
     @property
@@ -379,7 +406,11 @@ class Connection:
         """
         return self._control_events.granted_event
 
-    def request_control(self, behavior_control_level: ControlPriorityLevel = ControlPriorityLevel.DEFAULT_PRIORITY, timeout: float = 10.0):
+    def request_control(
+        self,
+        behavior_control_level: ControlPriorityLevel = ControlPriorityLevel.DEFAULT_PRIORITY,
+        timeout: float = 10.0,
+    ):
         """Explicitly request behavior control. Typically used after detecting :func:`control_lost_event`.
 
         To be able to directly control Vector's motors, override his screen, play an animation, etc.,
@@ -402,18 +433,37 @@ class Connection:
                     See :class:`ControlPriorityLevel` for more information.
         """
         if not isinstance(behavior_control_level, ControlPriorityLevel):
-            raise TypeError("behavior_control_level must be of type ControlPriorityLevel")
+            raise TypeError(
+                "behavior_control_level must be of type ControlPriorityLevel"
+            )
         if self._thread is threading.current_thread():
-            return asyncio.ensure_future(self._request_control(behavior_control_level=behavior_control_level, timeout=timeout), loop=self._loop)
-        return self.run_coroutine(self._request_control(behavior_control_level=behavior_control_level, timeout=timeout))
+            return asyncio.ensure_future(
+                self._request_control(
+                    behavior_control_level=behavior_control_level, timeout=timeout
+                ),
+                loop=self._loop,
+            )
+        return self.run_coroutine(
+            self._request_control(
+                behavior_control_level=behavior_control_level, timeout=timeout
+            )
+        )
 
-    async def _request_control(self, behavior_control_level: ControlPriorityLevel = ControlPriorityLevel.DEFAULT_PRIORITY, timeout: float = 10.0):
+    async def _request_control(
+        self,
+        behavior_control_level: ControlPriorityLevel = ControlPriorityLevel.DEFAULT_PRIORITY,
+        timeout: float = 10.0,
+    ):
         self._behavior_control_level = behavior_control_level
         self._control_events.request(self._behavior_control_level)
         try:
-            self._has_control = await asyncio.wait_for(self.control_granted_event.wait(), timeout)
+            self._has_control = await asyncio.wait_for(
+                self.control_granted_event.wait(), timeout
+            )
         except futures.TimeoutError as e:
-            raise VectorControlTimeoutException(f"Surpassed timeout of {timeout}s") from e
+            raise VectorControlTimeoutException(
+                f"Surpassed timeout of {timeout}s"
+            ) from e
 
     def release_control(self, timeout: float = 10.0):
         """Explicitly release control. Typically used after detecting :func:`control_lost_event`.
@@ -435,16 +485,22 @@ class Connection:
         :param timeout: The time allotted to attempt to release control, in seconds.
         """
         if self._thread is threading.current_thread():
-            return asyncio.ensure_future(self._release_control(timeout=timeout), loop=self._loop)
+            return asyncio.ensure_future(
+                self._release_control(timeout=timeout), loop=self._loop
+            )
         return self.run_coroutine(self._release_control(timeout=timeout))
 
     async def _release_control(self, timeout: float = 10.0):
         self._behavior_control_level = None
         self._control_events.release()
         try:
-            self._has_control = await asyncio.wait_for(self.control_lost_event.wait(), timeout)
+            self._has_control = await asyncio.wait_for(
+                self.control_lost_event.wait(), timeout
+            )
         except futures.TimeoutError as e:
-            raise VectorControlTimeoutException(f"Surpassed timeout of {timeout}s") from e
+            raise VectorControlTimeoutException(
+                f"Surpassed timeout of {timeout}s"
+            ) from e
 
     def connect(self, timeout: float = 10.0) -> None:
         """Connect to Vector. This will start the connection thread which handles all messages
@@ -470,9 +526,16 @@ class Connection:
         :param timeout: The time allotted to attempt a connection, in seconds.
         """
         if self._thread:
-            raise VectorAsyncException("\n\nRepeated connections made to open Connection.")
+            raise VectorAsyncException(
+                "\n\nRepeated connections made to open Connection."
+            )
         self._ready_signal.clear()
-        self._thread = threading.Thread(target=self._connect, args=(timeout,), daemon=True, name="gRPC Connection Handler Thread")
+        self._thread = threading.Thread(
+            target=self._connect,
+            args=(timeout,),
+            daemon=True,
+            name="gRPC Connection Handler Thread",
+        )
         self._thread.start()
         ready = self._ready_signal.wait(timeout=4 * timeout)
         if not ready:
@@ -488,53 +551,85 @@ class Connection:
         """
         try:
             if threading.main_thread() is threading.current_thread():
-                raise VectorAsyncException("\n\nConnection._connect must be run outside of the main thread.")
+                raise VectorAsyncException(
+                    "\n\nConnection._connect must be run outside of the main thread."
+                )
             self._loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self._loop)
             self._done_signal = asyncio.Event()
             if not self._behavior_control_level:
                 self._control_events = _ControlEventManager(self._loop)
             else:
-                self._control_events = _ControlEventManager(self._loop, priority=self._behavior_control_level)
+                self._control_events = _ControlEventManager(
+                    self._loop, priority=self._behavior_control_level
+                )
 
             trusted_certs = None
             if not self.cert_file is None:
-                with open(self.cert_file, 'rb') as cert:
+                with open(self.cert_file, "rb") as cert:
                     trusted_certs = cert.read()
             else:
                 if not self._escape_pod:
-                    raise VectorConfigurationException("Must provide a cert file to authenticate to Vector.")
+                    raise VectorConfigurationException(
+                        "Must provide a cert file to authenticate to Vector."
+                    )
 
             if self._escape_pod:
                 if not EscapePod.validate_certificate_name(self.cert_file, self.name):
                     trusted_certs = EscapePod.get_authentication_certificate(self.host)
                     self.name = EscapePod.get_certificate_name(trusted_certs)
-                self._guid = EscapePod.authenticate_escape_pod(self.host, self.name, trusted_certs)
+                self._guid = EscapePod.authenticate_escape_pod(
+                    self.host, self.name, trusted_certs
+                )
 
             # Pin the robot certificate for opening the channel
-            channel_credentials = aiogrpc.ssl_channel_credentials(root_certificates=trusted_certs)
+            channel_credentials = aiogrpc.ssl_channel_credentials(
+                root_certificates=trusted_certs
+            )
             # Add authorization header for all the calls
             call_credentials = aiogrpc.access_token_call_credentials(self._guid)
 
-            credentials = aiogrpc.composite_channel_credentials(channel_credentials, call_credentials)
+            credentials = aiogrpc.composite_channel_credentials(
+                channel_credentials, call_credentials
+            )
 
-            self._logger.info(f"Connecting to {self.host} for {self.name} using {self.cert_file}")
-            self._channel = aiogrpc.secure_channel(self.host, credentials,
-                                                   options=(("grpc.ssl_target_name_override", self.name,),))
+            self._logger.info(
+                f"Connecting to {self.host} for {self.name} using {self.cert_file}"
+            )
+            self._channel = aiogrpc.secure_channel(
+                self.host,
+                credentials,
+                options=(
+                    (
+                        "grpc.ssl_target_name_override",
+                        self.name,
+                    ),
+                ),
+            )
 
             # Verify the connection to Vector is able to be established (client-side)
             try:
                 # Explicitly grab _channel._channel to test the underlying grpc channel directly
-                grpc.channel_ready_future(self._channel._channel).result(timeout=timeout)  # pylint: disable=protected-access
+                grpc.channel_ready_future(self._channel._channel).result(
+                    timeout=timeout
+                )  # pylint: disable=protected-access
             except grpc.FutureTimeoutError as e:
                 raise VectorNotFoundException() from e
 
             self._interface = client.ExternalInterfaceStub(self._channel)
 
             # Verify Vector and the SDK have compatible protocol versions
-            version = protocol.ProtocolVersionRequest(client_version=protocol.PROTOCOL_VERSION_CURRENT, min_host_version=protocol.PROTOCOL_VERSION_MINIMUM)
-            protocol_version = self._loop.run_until_complete(self._interface.ProtocolVersion(version))
-            if protocol_version.result != protocol.ProtocolVersionResponse.SUCCESS or protocol.PROTOCOL_VERSION_MINIMUM > protocol_version.host_version:  # pylint: disable=no-member
+            version = protocol.ProtocolVersionRequest(
+                client_version=protocol.PROTOCOL_VERSION_CURRENT,
+                min_host_version=protocol.PROTOCOL_VERSION_MINIMUM,
+            )
+            protocol_version = self._loop.run_until_complete(
+                self._interface.ProtocolVersion(version)
+            )
+            if (
+                protocol_version.result != protocol.ProtocolVersionResponse.SUCCESS
+                or protocol.PROTOCOL_VERSION_MINIMUM > protocol_version.host_version
+            ):  # pylint: disable=no-member
                 raise VectorInvalidVersionException(protocol_version)
 
             self._control_stream_task = self._loop.create_task(self._open_connections())
@@ -545,15 +640,22 @@ class Connection:
             python_implementation = platform.python_implementation()
             os_version = platform.platform()
             cpu_version = platform.machine()
-            initialize = protocol.SDKInitializationRequest(sdk_module_version=sdk_module_version,
-                                                           python_version=python_version,
-                                                           python_implementation=python_implementation,
-                                                           os_version=os_version,
-                                                           cpu_version=cpu_version)
+            initialize = protocol.SDKInitializationRequest(
+                sdk_module_version=sdk_module_version,
+                python_version=python_version,
+                python_implementation=python_implementation,
+                os_version=os_version,
+                cpu_version=cpu_version,
+            )
             self._loop.run_until_complete(self._interface.SDKInitialization(initialize))
 
             if self._behavior_control_level:
-                self._loop.run_until_complete(self._request_control(behavior_control_level=self._behavior_control_level, timeout=timeout))
+                self._loop.run_until_complete(
+                    self._request_control(
+                        behavior_control_level=self._behavior_control_level,
+                        timeout=timeout,
+                    )
+                )
         except grpc.RpcError as rpc_error:  # pylint: disable=broad-except
             setattr(self._ready_signal, "exception", connection_error(rpc_error))
             self._loop.close()
@@ -567,8 +669,10 @@ class Connection:
             self._ready_signal.set()
 
         try:
+
             async def wait_until_done():
                 return await self._done_signal.wait()
+
             self._loop.run_until_complete(wait_until_done())
         finally:
             self._loop.close()
@@ -586,23 +690,33 @@ class Connection:
             else:
                 msg = protocol.ControlRequest(priority=priority.value)
                 msg = protocol.BehaviorControlRequest(control_request=msg)
-            self._logger.debug(f"BehaviorControl {MessageToString(msg, as_one_line=True)}")
+            self._logger.debug(
+                f"BehaviorControl {MessageToString(msg, as_one_line=True)}"
+            )
             yield msg
 
     async def _open_connections(self):
         """Starts the BehaviorControl stream, and handles the messages coming back from the robot."""
         try:
-            async for response in self._interface.BehaviorControl(self._request_handler()):
+            async for response in self._interface.BehaviorControl(
+                self._request_handler()
+            ):
                 response_type = response.WhichOneof("response_type")
-                if response_type == 'control_granted_response':
-                    self._logger.info(f"BehaviorControl {MessageToString(response, as_one_line=True)}")
+                if response_type == "control_granted_response":
+                    self._logger.info(
+                        f"BehaviorControl {MessageToString(response, as_one_line=True)}"
+                    )
                     self._control_events.update(True)
-                elif response_type == 'control_lost_event':
+                elif response_type == "control_lost_event":
                     self._cancel_active()
-                    self._logger.info(f"BehaviorControl {MessageToString(response, as_one_line=True)}")
+                    self._logger.info(
+                        f"BehaviorControl {MessageToString(response, as_one_line=True)}"
+                    )
                     self._control_events.update(False)
         except futures.CancelledError:
-            self._logger.debug('Behavior handler task was cancelled. This is expected during disconnection.')
+            self._logger.debug(
+                "Behavior handler task was cancelled. This is expected during disconnection."
+            )
 
     def _cancel_active(self):
         for fut in self.active_commands:
@@ -666,13 +780,18 @@ class Connection:
         :param coro: The coroutine, task or any awaitable to schedule for execution on the connection thread.
         """
         if coro is None or not inspect.isawaitable(coro):
-            raise VectorAsyncException(f"\n\n{coro.__name__ if hasattr(coro, '__name__') else coro} is not awaitable, so cannot be ran with run_soon.\n")
+            raise VectorAsyncException(
+                f"\n\n{coro.__name__ if hasattr(coro, '__name__') else coro} is not awaitable, so cannot be ran with run_soon.\n"
+            )
 
         def soon():
             try:
                 asyncio.ensure_future(coro)
             except TypeError as e:
-                raise VectorAsyncException(f"\n\n{coro.__name__ if hasattr(coro, '__name__') else coro} could not be ensured as a future.\n") from e
+                raise VectorAsyncException(
+                    f"\n\n{coro.__name__ if hasattr(coro, '__name__') else coro} could not be ensured as a future.\n"
+                ) from e
+
         if threading.current_thread() is self._thread:
             self._loop.call_soon(soon)
         else:
@@ -697,26 +816,38 @@ class Connection:
         :returns: The result of the awaitable's execution.
         """
         if threading.current_thread() is self._thread:
-            raise VectorAsyncException("Attempting to invoke async from same thread."
-                                       "Instead you may want to use 'run_soon'")
+            raise VectorAsyncException(
+                "Attempting to invoke async from same thread."
+                "Instead you may want to use 'run_soon'"
+            )
         if asyncio.iscoroutinefunction(coro) or asyncio.iscoroutine(coro):
             return self._run_coroutine(coro)
         if asyncio.isfuture(coro):
+
             async def future_coro():
                 return await coro
+
             return self._run_coroutine(future_coro())
         if callable(coro):
+
             async def wrapped_coro():
                 return coro()
+
             return self._run_coroutine(wrapped_coro())
-        raise VectorAsyncException("\n\nInvalid parameter to run_coroutine: {}\n"
-                                   "This function expects a coroutine, task, or awaitable.".format(type(coro)))
+        raise VectorAsyncException(
+            "\n\nInvalid parameter to run_coroutine: {}\n"
+            "This function expects a coroutine, task, or awaitable.".format(type(coro))
+        )
 
     def _run_coroutine(self, coro):
         return asyncio.run_coroutine_threadsafe(coro, self._loop)
 
 
-def on_connection_thread(log_messaging: bool = True, requires_control: bool = True, is_cancellable: CancelType = None) -> Callable[[Coroutine[util.Component, Any, None]], Any]:
+def on_connection_thread(
+    log_messaging: bool = True,
+    requires_control: bool = True,
+    is_cancellable: CancelType = None,
+) -> Callable[[Coroutine[util.Component, Any, None]], Any]:
     """A decorator generator used internally to denote which functions will run on
     the connection thread. This unblocks the caller of the wrapped function
     and allows them to continue running while the messages are being processed.
@@ -742,6 +873,7 @@ def on_connection_thread(log_messaging: bool = True, requires_control: bool = Tr
         when the robot is an :class:`~anki_vector.robot.AsyncRobot`, and when
         called from the connection thread respectively.
     """
+
     def _on_connection_thread_decorator(func: Coroutine) -> Any:
         """A decorator which specifies a function to be executed on the connection thread
 
@@ -754,11 +886,21 @@ def on_connection_thread(log_messaging: bool = True, requires_control: bool = Tr
             called from the connection thread respectively.
         """
         if not asyncio.iscoroutinefunction(func):
-            raise VectorAsyncException("\n\nCannot define non-coroutine function '{}' to run on connection thread.\n"
-                                       "Make sure the function is defined using 'async def'.".format(func.__name__ if hasattr(func, "__name__") else func))
+            raise VectorAsyncException(
+                "\n\nCannot define non-coroutine function '{}' to run on connection thread.\n"
+                "Make sure the function is defined using 'async def'.".format(
+                    func.__name__ if hasattr(func, "__name__") else func
+                )
+            )
 
         @functools.wraps(func)
-        async def log_handler(conn: Connection, func: Coroutine, logger: logging.Logger, *args: List[Any], **kwargs: Dict[str, Any]) -> Coroutine:
+        async def log_handler(
+            conn: Connection,
+            func: Coroutine,
+            logger: logging.Logger,
+            *args: List[Any],
+            **kwargs: Dict[str, Any],
+        ) -> Coroutine:
             """Wrap the provided coroutine to better express exceptions as specific :class:`anki_vector.exceptions.VectorException`s, and
             adds logging to incoming (from the robot) and outgoing (to the robot) messages.
             """
@@ -768,17 +910,29 @@ def on_connection_thread(log_messaging: bool = True, requires_control: bool = Tr
             if requires_control and not control.is_set():
                 if not conn.requires_behavior_control:
                     raise VectorControlException(func.__name__)
-                logger.info(f"Delaying {func.__name__} until behavior control is granted")
+                logger.info(
+                    f"Delaying {func.__name__} until behavior control is granted"
+                )
                 await asyncio.wait([conn.control_granted_event.wait()], timeout=10)
             message = args[1:]
-            outgoing = message if log_messaging else "size = {} bytes".format(sys.getsizeof(message))
-            logger.debug(f'Outgoing {func.__name__}: {outgoing}')
+            outgoing = (
+                message
+                if log_messaging
+                else "size = {} bytes".format(sys.getsizeof(message))
+            )
+            logger.debug(f"Outgoing {func.__name__}: {outgoing}")
             try:
                 result = await func(*args, **kwargs)
             except grpc.RpcError as rpc_error:
                 raise connection_error(rpc_error) from rpc_error
-            incoming = str(result).strip() if log_messaging else "size = {} bytes".format(sys.getsizeof(result))
-            logger.debug(f'Incoming {func.__name__}: {type(result).__name__}  {incoming}')
+            incoming = (
+                str(result).strip()
+                if log_messaging
+                else "size = {} bytes".format(sys.getsizeof(result))
+            )
+            logger.debug(
+                f"Incoming {func.__name__}: {type(result).__name__}  {incoming}"
+            )
             return result
 
         @functools.wraps(func)
@@ -795,23 +949,30 @@ def on_connection_thread(log_messaging: bool = True, requires_control: bool = Tr
                 called from the connection thread respectively."""
             self = args[0]  # Get the self reference from the function call
             # if the call supplies a _return_future parameter then override force_async with that.
-            _return_future = kwargs.pop('_return_future', self.force_async)
+            _return_future = kwargs.pop("_return_future", self.force_async)
 
             action_id = None
             if is_cancellable == CancelType.CANCELLABLE_ACTION:
                 action_id = self._get_next_action_id()
-                kwargs['_action_id'] = action_id
+                kwargs["_action_id"] = action_id
 
-            wrapped_coroutine = log_handler(self.conn, func, self.logger, *args, **kwargs)
+            wrapped_coroutine = log_handler(
+                self.conn, func, self.logger, *args, **kwargs
+            )
 
             if threading.current_thread() == self.conn.thread:
                 if self.conn.loop.is_running():
                     return asyncio.ensure_future(wrapped_coroutine, loop=self.conn.loop)
-                raise VectorAsyncException("\n\nThe connection thread loop is not running, but a "
-                                           "function '{}' is being invoked on that thread.\n".format(func.__name__ if hasattr(func, "__name__") else func))
+                raise VectorAsyncException(
+                    "\n\nThe connection thread loop is not running, but a "
+                    "function '{}' is being invoked on that thread.\n".format(
+                        func.__name__ if hasattr(func, "__name__") else func
+                    )
+                )
             future = asyncio.run_coroutine_threadsafe(wrapped_coroutine, self.conn.loop)
 
             if is_cancellable == CancelType.CANCELLABLE_ACTION:
+
                 def user_cancelled_action(fut):
                     if action_id is None:
                         return
@@ -822,6 +983,7 @@ def on_connection_thread(log_messaging: bool = True, requires_control: bool = Tr
                 future.add_done_callback(user_cancelled_action)
 
             if is_cancellable == CancelType.CANCELLABLE_BEHAVIOR:
+
                 def user_cancelled_behavior(fut):
                     if fut.cancelled():
                         self._abort_behavior()
@@ -834,13 +996,18 @@ def on_connection_thread(log_messaging: bool = True, requires_control: bool = Tr
                 def clear_when_done(fut):
                     if fut in self.conn.active_commands:
                         self.conn.active_commands.remove(fut)
+
                 future.add_done_callback(clear_when_done)
             if _return_future:
                 return future
             try:
                 return future.result()
             except futures.CancelledError:
-                self.logger.warning(f"{func.__name__} cancelled because behavior control was lost")
+                self.logger.warning(
+                    f"{func.__name__} cancelled because behavior control was lost"
+                )
                 return None
+
         return result
+
     return _on_connection_thread_decorator

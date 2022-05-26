@@ -37,54 +37,59 @@ Requirements:
 
 import os.path
 import sys
+
 from setuptools import setup
 
 if sys.version_info < (3, 6, 1):
-    sys.exit('The Vector SDK requires Python 3.6.1 or later')
+    sys.exit("The Vector SDK requires Python 3.6.1 or later")
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
+
 def fetch_version():
     """Get the version from the package"""
-    with open(os.path.join(HERE, 'vector', 'version.py')) as version_file:
+    with open(os.path.join(HERE, "vector", "version.py")) as version_file:
         versions = {}
         exec(version_file.read(), versions)
         return versions
 
+
 VERSION_DATA = fetch_version()
-VERSION = VERSION_DATA['__version__']
+VERSION = VERSION_DATA["__version__"]
+
 
 def get_requirements():
     """Load the requirements from requirements.txt into a list"""
     reqs = []
-    with open(os.path.join(HERE, 'requirements.txt')) as requirements_file:
+    with open(os.path.join(HERE, "requirements.txt")) as requirements_file:
         for line in requirements_file:
             reqs.append(line.strip())
     return reqs
 
+
 setup(
-    name='pyHAVector',
+    name="pyHAVector",
     version=VERSION,
     description="The Vector SDK is a connected vision- and character-based robotics platform for everyone.",
-    url='https://github.com/mtrab/pyhavector',
-    author='Anki, Inc',
-    author_email='developer@anki.com',
-    license='Apache License, Version 2.0',
+    url="https://github.com/mtrab/pyhavector",
+    author="Anki, Inc",
+    author_email="developer@anki.com",
+    license="Apache License, Version 2.0",
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Intended Audience :: Developers',
-        'Topic :: Software Development :: Libraries',
-        'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
-        'Programming Language :: Python :: 3.8',
+        "Development Status :: 3 - Alpha",
+        "Intended Audience :: Developers",
+        "Topic :: Software Development :: Libraries",
+        "License :: OSI Approved :: Apache Software License",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     zip_safe=True,
     install_requires=get_requirements(),
     extras_require={
-        '3dviewer': ['PyOpenGL>=3.1'],
-        'docs': ['sphinx', 'sphinx_rtd_theme', 'sphinx_autodoc_typehints'],
-        'experimental': ['keras', 'scikit-learn', 'scipy', 'tensorflow'],
-        'test': ['pytest', 'requests', 'requests_toolbelt'],
-    }
+        "3dviewer": ["PyOpenGL>=3.1"],
+        "docs": ["sphinx", "sphinx_rtd_theme", "sphinx_autodoc_typehints"],
+        "experimental": ["keras", "scikit-learn", "scipy", "tensorflow"],
+        "test": ["pytest", "requests", "requests_toolbelt"],
+    },
 )

@@ -28,7 +28,9 @@ import tkinter as tk
 try:
     from PIL import ImageTk
 except ImportError:
-    sys.exit('Cannot import from PIL: Do `pip3 install --user "cyb3r_vector_sdk[3dviewer]"` to install')
+    sys.exit(
+        'Cannot import from PIL: Do `pip3 install --user "cyb3r_vector_sdk[3dviewer]"` to install'
+    )
 
 
 class TkCameraViewer:  # pylint: disable=too-few-public-methods
@@ -41,7 +43,14 @@ class TkCameraViewer:  # pylint: disable=too-few-public-methods
     :param force_on_top: Specifies whether the window should be forced on top of all others.
     """
 
-    def __init__(self, queue: mp.Queue, event: mp.Event, overlays: list = None, timeout: float = 10.0, force_on_top: bool = True):
+    def __init__(
+        self,
+        queue: mp.Queue,
+        event: mp.Event,
+        overlays: list = None,
+        timeout: float = 10.0,
+        force_on_top: bool = True,
+    ):
         self.tk_root = tk.Tk()
         self.width = None
         self.height = None
@@ -96,7 +105,13 @@ class TkCameraViewer:  # pylint: disable=too-few-public-methods
                 return
 
 
-def main(queue: mp.Queue, event: mp.Event, overlays: list = None, timeout: float = 10.0, force_on_top: bool = False) -> None:
+def main(
+    queue: mp.Queue,
+    event: mp.Event,
+    overlays: list = None,
+    timeout: float = 10.0,
+    force_on_top: bool = False,
+) -> None:
     """Rendering the frames in another process. This allows the UI to have the
     main thread of its process while the user code continues to execute.
 
@@ -118,4 +133,4 @@ def main(queue: mp.Queue, event: mp.Event, overlays: list = None, timeout: float
         event.set()
 
 
-__all__ = ['TkCameraViewer', 'main']
+__all__ = ["TkCameraViewer", "main"]

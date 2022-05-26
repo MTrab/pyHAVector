@@ -20,16 +20,12 @@ see with its camera.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['World']
+__all__ = ["World"]
 
 from concurrent import futures
 from typing import Iterable
 
-from . import faces
-from . import connection
-from . import objects
-from . import util
-
+from . import connection, faces, objects, util
 from .events import Events
 from .messaging import protocol
 
@@ -64,7 +60,9 @@ class World(util.Component):
 
         # Objects by type
         self._faces = {}
-        self._light_cube = {objects.LIGHT_CUBE_1_TYPE: self.light_cube_factory(robot=robot)}
+        self._light_cube = {
+            objects.LIGHT_CUBE_1_TYPE: self.light_cube_factory(robot=robot)
+        }
         self._custom_objects = {}
 
         #: :class:`anki_vector.objects.Charger`: Vector's charger.
@@ -75,13 +73,17 @@ class World(util.Component):
         self._objects = {}
 
         # Subscribe to callbacks that updates the world view
-        self._robot.events.subscribe(self._on_face_observed,
-                                     Events.robot_observed_face,
-                                     _on_connection_thread=True)
+        self._robot.events.subscribe(
+            self._on_face_observed,
+            Events.robot_observed_face,
+            _on_connection_thread=True,
+        )
 
-        self._robot.events.subscribe(self._on_object_observed,
-                                     Events.robot_observed_object,
-                                     _on_connection_thread=True)
+        self._robot.events.subscribe(
+            self._on_object_observed,
+            Events.robot_observed_object,
+            _on_connection_thread=True,
+        )
 
     #### Public Properties ####
 
@@ -287,11 +289,13 @@ class World(util.Component):
         for obj in self._objects.values():
             obj.teardown()
 
-        self._robot.events.unsubscribe(self._on_face_observed,
-                                       Events.robot_observed_face)
+        self._robot.events.unsubscribe(
+            self._on_face_observed, Events.robot_observed_face
+        )
 
-        self._robot.events.unsubscribe(self._on_object_observed,
-                                       Events.robot_observed_object)
+        self._robot.events.unsubscribe(
+            self._on_object_observed, Events.robot_observed_object
+        )
 
     def get_object(self, object_id: int):
         """Fetches an object instance with the given id.
@@ -362,7 +366,8 @@ class World(util.Component):
             object_id=result.object_id,
             factory_id=result.factory_id,
             connected=result.success,
-            object_type=objects.LIGHT_CUBE_1_TYPE)
+            object_type=objects.LIGHT_CUBE_1_TYPE,
+        )
 
         await self._robot.events.dispatch_event(event, Events.object_connection_state)
 
@@ -420,7 +425,9 @@ class World(util.Component):
 
     # TODO move out of world.py and into objects.py?
     @connection.on_connection_thread(requires_control=False)
-    async def set_preferred_cube(self, factory_id: str) -> protocol.SetPreferredCubeResponse:
+    async def set_preferred_cube(
+        self, factory_id: str
+    ) -> protocol.SetPreferredCubeResponse:
         """Set preferred cube.
 
         Set the robot's preferred cube and save it to disk. The robot
@@ -443,10 +450,12 @@ class World(util.Component):
 
     # TODO better place to put this method than world.py?
     @connection.on_connection_thread(requires_control=False)
-    async def delete_custom_objects(self,
-                                    delete_custom_marker_objects: bool = True,
-                                    delete_fixed_custom_objects: bool = True,
-                                    delete_custom_object_archetypes: bool = True):
+    async def delete_custom_objects(
+        self,
+        delete_custom_marker_objects: bool = True,
+        delete_fixed_custom_objects: bool = True,
+        delete_custom_object_archetypes: bool = True,
+    ):
         """Causes the robot to forget about custom objects it currently knows about.
 
         See :class:`objects.CustomObjectMarkers`.
@@ -462,38 +471,50 @@ class World(util.Component):
 
         if delete_custom_object_archetypes:
             self._custom_object_archetypes.clear()
-            req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_ARCHETYPES"))
+            req = protocol.DeleteCustomObjectsRequest(
+                mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_ARCHETYPES")
+            )
             last_blocking_call = await self.grpc_interface.DeleteCustomObjects(req)
             delete_custom_marker_objects = True
 
         if delete_custom_marker_objects:
             self._remove_all_custom_marker_object_instances()
-            req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_CUSTOM_MARKER_OBJECTS"))
+            req = protocol.DeleteCustomObjectsRequest(
+                mode=protocol.CustomObjectDeletionMode.Value(
+                    "DELETION_MASK_CUSTOM_MARKER_OBJECTS"
+                )
+            )
             last_blocking_call = await self.grpc_interface.DeleteCustomObjects(req)
 
         if delete_fixed_custom_objects:
             self._remove_all_fixed_custom_object_instances()
-            req = protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_FIXED_CUSTOM_OBJECTS"))
+            req = protocol.DeleteCustomObjectsRequest(
+                mode=protocol.CustomObjectDeletionMode.Value(
+                    "DELETION_MASK_FIXED_CUSTOM_OBJECTS"
+                )
+            )
             last_blocking_call = await self.grpc_interface.DeleteCustomObjects(req)
 
         return last_blocking_call
 
     # TODO better place to put this method than world.py?
     @connection.on_connection_thread(requires_control=False)
-    async def define_custom_box(self,
-                                custom_object_type: objects.CustomObjectTypes,
-                                marker_front: objects.CustomObjectMarkers,
-                                marker_back: objects.CustomObjectMarkers,
-                                marker_top: objects.CustomObjectMarkers,
-                                marker_bottom: objects.CustomObjectMarkers,
-                                marker_left: objects.CustomObjectMarkers,
-                                marker_right: objects.CustomObjectMarkers,
-                                depth_mm: float,
-                                width_mm: float,
-                                height_mm: float,
-                                marker_width_mm: float,
-                                marker_height_mm: float,
-                                is_unique: bool = True) -> objects.CustomObject:
+    async def define_custom_box(
+        self,
+        custom_object_type: objects.CustomObjectTypes,
+        marker_front: objects.CustomObjectMarkers,
+        marker_back: objects.CustomObjectMarkers,
+        marker_top: objects.CustomObjectMarkers,
+        marker_bottom: objects.CustomObjectMarkers,
+        marker_left: objects.CustomObjectMarkers,
+        marker_right: objects.CustomObjectMarkers,
+        depth_mm: float,
+        width_mm: float,
+        height_mm: float,
+        marker_width_mm: float,
+        marker_height_mm: float,
+        is_unique: bool = True,
+    ) -> objects.CustomObject:
         """Defines a cuboid of custom size and binds it to a specific custom object type.
 
         The robot will now detect the markers associated with this object and send an
@@ -541,34 +562,52 @@ class World(util.Component):
             TypeError if the custom_object_type is of the wrong type.
             ValueError if the 6 markers aren't unique.
         """
-        if not isinstance(custom_object_type, objects._CustomObjectType):  # pylint: disable=protected-access
+        if not isinstance(
+            custom_object_type, objects._CustomObjectType
+        ):  # pylint: disable=protected-access
             raise TypeError("Unsupported object_type, requires CustomObjectType")
 
         # verify all 6 markers are unique
-        markers = {marker_front, marker_back, marker_top, marker_bottom, marker_left, marker_right}
+        markers = {
+            marker_front,
+            marker_back,
+            marker_top,
+            marker_bottom,
+            marker_left,
+            marker_right,
+        }
         if len(markers) != 6:
             raise ValueError("all markers must be unique for a custom box")
 
-        custom_object_archetype = objects.CustomObjectArchetype(custom_object_type,
-                                                                depth_mm, width_mm, height_mm,
-                                                                marker_width_mm, marker_height_mm,
-                                                                is_unique)
+        custom_object_archetype = objects.CustomObjectArchetype(
+            custom_object_type,
+            depth_mm,
+            width_mm,
+            height_mm,
+            marker_width_mm,
+            marker_height_mm,
+            is_unique,
+        )
 
-        definition = protocol.CustomBoxDefinition(marker_front=marker_front.id,
-                                                  marker_back=marker_back.id,
-                                                  marker_top=marker_top.id,
-                                                  marker_bottom=marker_bottom.id,
-                                                  marker_left=marker_left.id,
-                                                  marker_right=marker_right.id,
-                                                  x_size_mm=depth_mm,
-                                                  y_size_mm=width_mm,
-                                                  z_size_mm=height_mm,
-                                                  marker_width_mm=marker_width_mm,
-                                                  marker_height_mm=marker_height_mm)
+        definition = protocol.CustomBoxDefinition(
+            marker_front=marker_front.id,
+            marker_back=marker_back.id,
+            marker_top=marker_top.id,
+            marker_bottom=marker_bottom.id,
+            marker_left=marker_left.id,
+            marker_right=marker_right.id,
+            x_size_mm=depth_mm,
+            y_size_mm=width_mm,
+            z_size_mm=height_mm,
+            marker_width_mm=marker_width_mm,
+            marker_height_mm=marker_height_mm,
+        )
 
-        req = protocol.DefineCustomObjectRequest(custom_type=custom_object_type.id,
-                                                 is_unique=is_unique,
-                                                 custom_box=definition)
+        req = protocol.DefineCustomObjectRequest(
+            custom_type=custom_object_type.id,
+            is_unique=is_unique,
+            custom_box=definition,
+        )
 
         response = await self.grpc_interface.DefineCustomObject(req)
 
@@ -582,13 +621,15 @@ class World(util.Component):
 
     # TODO better place to put this method than world.py?
     @connection.on_connection_thread(requires_control=False)
-    async def define_custom_cube(self,
-                                 custom_object_type: objects.CustomObjectTypes,
-                                 marker: objects.CustomObjectMarkers,
-                                 size_mm: float,
-                                 marker_width_mm: float,
-                                 marker_height_mm: float,
-                                 is_unique: bool = True) -> objects.CustomObject:
+    async def define_custom_cube(
+        self,
+        custom_object_type: objects.CustomObjectTypes,
+        marker: objects.CustomObjectMarkers,
+        size_mm: float,
+        marker_width_mm: float,
+        marker_height_mm: float,
+        is_unique: bool = True,
+    ) -> objects.CustomObject:
         """Defines a cube of custom size and binds it to a specific custom object type.
 
         The robot will now detect the markers associated with this object and send an
@@ -623,22 +664,33 @@ class World(util.Component):
             TypeError if the custom_object_type is of the wrong type.
         """
 
-        if not isinstance(custom_object_type, objects._CustomObjectType):  # pylint: disable=protected-access
+        if not isinstance(
+            custom_object_type, objects._CustomObjectType
+        ):  # pylint: disable=protected-access
             raise TypeError("Unsupported object_type, requires CustomObjectType")
 
-        custom_object_archetype = objects.CustomObjectArchetype(custom_object_type,
-                                                                size_mm, size_mm, size_mm,
-                                                                marker_width_mm, marker_height_mm,
-                                                                is_unique)
+        custom_object_archetype = objects.CustomObjectArchetype(
+            custom_object_type,
+            size_mm,
+            size_mm,
+            size_mm,
+            marker_width_mm,
+            marker_height_mm,
+            is_unique,
+        )
 
-        definition = protocol.CustomCubeDefinition(marker=marker.id,
-                                                   size_mm=size_mm,
-                                                   marker_width_mm=marker_width_mm,
-                                                   marker_height_mm=marker_height_mm)
+        definition = protocol.CustomCubeDefinition(
+            marker=marker.id,
+            size_mm=size_mm,
+            marker_width_mm=marker_width_mm,
+            marker_height_mm=marker_height_mm,
+        )
 
-        req = protocol.DefineCustomObjectRequest(custom_type=custom_object_type.id,
-                                                 is_unique=is_unique,
-                                                 custom_cube=definition)
+        req = protocol.DefineCustomObjectRequest(
+            custom_type=custom_object_type.id,
+            is_unique=is_unique,
+            custom_cube=definition,
+        )
 
         response = await self.grpc_interface.DefineCustomObject(req)
 
@@ -652,14 +704,16 @@ class World(util.Component):
 
     # TODO better place to put this method than world.py?
     @connection.on_connection_thread(requires_control=False)
-    async def define_custom_wall(self,
-                                 custom_object_type: objects.CustomObjectTypes,
-                                 marker: objects.CustomObjectMarkers,
-                                 width_mm: float,
-                                 height_mm: float,
-                                 marker_width_mm: float,
-                                 marker_height_mm: float,
-                                 is_unique: bool = True) -> objects.CustomObject:
+    async def define_custom_wall(
+        self,
+        custom_object_type: objects.CustomObjectTypes,
+        marker: objects.CustomObjectMarkers,
+        width_mm: float,
+        height_mm: float,
+        marker_width_mm: float,
+        marker_height_mm: float,
+        is_unique: bool = True,
+    ) -> objects.CustomObject:
         """Defines a wall of custom width and height, with a fixed depth of 10mm, and binds it to a specific custom object type.
 
         The robot will now detect the markers associated with this object and send an
@@ -697,25 +751,36 @@ class World(util.Component):
             TypeError if the custom_object_type is of the wrong type.
         """
 
-        if not isinstance(custom_object_type, objects._CustomObjectType):  # pylint: disable=protected-access
+        if not isinstance(
+            custom_object_type, objects._CustomObjectType
+        ):  # pylint: disable=protected-access
             raise TypeError("Unsupported object_type, requires CustomObjectType")
 
         thickness_mm = protocol.ObjectConstants.Value("FIXED_CUSTOM_WALL_THICKNESS_MM")
 
-        custom_object_archetype = objects.CustomObjectArchetype(custom_object_type,
-                                                                thickness_mm, width_mm, height_mm,
-                                                                marker_width_mm, marker_height_mm,
-                                                                is_unique)
+        custom_object_archetype = objects.CustomObjectArchetype(
+            custom_object_type,
+            thickness_mm,
+            width_mm,
+            height_mm,
+            marker_width_mm,
+            marker_height_mm,
+            is_unique,
+        )
 
-        definition = protocol.CustomWallDefinition(marker=marker.id,
-                                                   width_mm=width_mm,
-                                                   height_mm=height_mm,
-                                                   marker_width_mm=marker_width_mm,
-                                                   marker_height_mm=marker_height_mm)
+        definition = protocol.CustomWallDefinition(
+            marker=marker.id,
+            width_mm=width_mm,
+            height_mm=height_mm,
+            marker_width_mm=marker_width_mm,
+            marker_height_mm=marker_height_mm,
+        )
 
-        req = protocol.DefineCustomObjectRequest(custom_type=custom_object_type.id,
-                                                 is_unique=is_unique,
-                                                 custom_wall=definition)
+        req = protocol.DefineCustomObjectRequest(
+            custom_type=custom_object_type.id,
+            is_unique=is_unique,
+            custom_wall=definition,
+        )
 
         response = await self.grpc_interface.DefineCustomObject(req)
 
@@ -728,13 +793,15 @@ class World(util.Component):
         return None
 
     # TODO better place to put this method than world.py?
-    def create_custom_fixed_object(self,
-                                   pose: util.Pose,
-                                   x_size_mm: float,
-                                   y_size_mm: float,
-                                   z_size_mm: float,
-                                   relative_to_robot: bool = False,
-                                   use_robot_origin: bool = True) -> objects.FixedCustomObject:
+    def create_custom_fixed_object(
+        self,
+        pose: util.Pose,
+        x_size_mm: float,
+        y_size_mm: float,
+        z_size_mm: float,
+        relative_to_robot: bool = False,
+        use_robot_origin: bool = True,
+    ) -> objects.FixedCustomObject:
         """Defines a cuboid of custom size and places it in the world. It cannot be observed.
 
         See :class:`objects.CustomObjectMarkers`.
@@ -763,26 +830,30 @@ class World(util.Component):
         # Override the origin of the pose to be the same as the robot's. This will make sure they are in
         # the same space in the robot every time.
         if use_robot_origin:
-            pose = util.Pose(x=pose.position.x, y=pose.position.y, z=pose.position.z,
-                             q0=pose.rotation.q0, q1=pose.rotation.q1,
-                             q2=pose.rotation.q2, q3=pose.rotation.q3,
-                             origin_id=self._robot.pose.origin_id)
+            pose = util.Pose(
+                x=pose.position.x,
+                y=pose.position.y,
+                z=pose.position.z,
+                q0=pose.rotation.q0,
+                q1=pose.rotation.q1,
+                q2=pose.rotation.q2,
+                q3=pose.rotation.q3,
+                origin_id=self._robot.pose.origin_id,
+            )
 
         # In this case define the given pose to be with respect to the robot's pose as its origin.
         if relative_to_robot:
             pose = self._robot.pose.define_pose_relative_this(pose)
 
-        response = self._create_custom_fixed_object(pose, x_size_mm, y_size_mm, z_size_mm)
+        response = self._create_custom_fixed_object(
+            pose, x_size_mm, y_size_mm, z_size_mm
+        )
         if isinstance(response, futures.Future):
             response = response.result()
 
         fixed_custom_object = self.fixed_custom_object_factory(
-            self._robot,
-            pose,
-            x_size_mm,
-            y_size_mm,
-            z_size_mm,
-            response.object_id)
+            self._robot, pose, x_size_mm, y_size_mm, z_size_mm, response.object_id
+        )
 
         if fixed_custom_object:
             self._objects[fixed_custom_object.object_id] = fixed_custom_object
@@ -790,17 +861,16 @@ class World(util.Component):
 
     # TODO: add return type hint
     @connection.on_connection_thread(requires_control=False)
-    async def _create_custom_fixed_object(self,
-                                          pose: util.Pose,
-                                          x_size_mm: float,
-                                          y_size_mm: float,
-                                          z_size_mm: float):
+    async def _create_custom_fixed_object(
+        self, pose: util.Pose, x_size_mm: float, y_size_mm: float, z_size_mm: float
+    ):
         """Send the CreateFixedCustomObject rpc call on the connection thread."""
         req = protocol.CreateFixedCustomObjectRequest(
             pose=pose.to_proto_pose_struct(),
             x_size_mm=x_size_mm,
             y_size_mm=y_size_mm,
-            z_size_mm=z_size_mm)
+            z_size_mm=z_size_mm,
+        )
 
         return await self.grpc_interface.CreateFixedCustomObject(req)
 
@@ -810,25 +880,41 @@ class World(util.Component):
         # obj is the base object type for this custom object. We make instances of this for every
         # unique object_id we see of this custom object type.
         first_custom_type = protocol.ObjectType.Value("FIRST_CUSTOM_OBJECT_TYPE")
-        if msg.object_type < first_custom_type or msg.object_type >= first_custom_type + protocol.CustomType.Value("CUSTOM_TYPE_COUNT"):
-            self.logger.error('Received a custom object observation with a type not inside the custom object range: %s. Msg=%s',
-                              msg.object_type, msg)
+        if (
+            msg.object_type < first_custom_type
+            or msg.object_type
+            >= first_custom_type + protocol.CustomType.Value("CUSTOM_TYPE_COUNT")
+        ):
+            self.logger.error(
+                "Received a custom object observation with a type not inside the custom object range: %s. Msg=%s",
+                msg.object_type,
+                msg,
+            )
             return None
 
         # Object observation events contain an object_type.  A subset of that object_type enum maps to the
         # custom_type enum, so we perform the conversion.
-        custom_type = msg.object_type - first_custom_type + objects.CustomObjectTypes.CustomType00.id
+        custom_type = (
+            msg.object_type
+            - first_custom_type
+            + objects.CustomObjectTypes.CustomType00.id
+        )
         archetype = self._custom_object_archetypes.get(custom_type)
         if not archetype:
-            self.logger.error('Received a custom object type: %s that has not been defined yet. Msg=%s',
-                              msg.object_type, msg)
+            self.logger.error(
+                "Received a custom object type: %s that has not been defined yet. Msg=%s",
+                msg.object_type,
+                msg,
+            )
             return None
 
-        custom_object = self.custom_object_factory(self._robot,
-                                                   archetype,
-                                                   msg.object_id)
+        custom_object = self.custom_object_factory(
+            self._robot, archetype, msg.object_id
+        )
 
-        self.logger.debug('Allocated object_id=%s to CustomObject %s', msg.object_id, custom_object)
+        self.logger.debug(
+            "Allocated object_id=%s to CustomObject %s", msg.object_id, custom_object
+        )
 
         if custom_object:
             self._custom_objects[msg.object_id] = custom_object
@@ -837,24 +923,34 @@ class World(util.Component):
     def _allocate_charger(self, msg):
         charger = self.charger_factory(self._robot, msg.object_id)
         if self._charger:
-            self.logger.warning('Allocating multiple chargers: existing charger=%s msg=%s', self._charger, msg)
+            self.logger.warning(
+                "Allocating multiple chargers: existing charger=%s msg=%s",
+                self._charger,
+                msg,
+            )
             return None
 
         self._charger = charger
 
-        self.logger.debug('Allocated object_id=%s to Charger %s', msg.object_id, charger)
+        self.logger.debug(
+            "Allocated object_id=%s to Charger %s", msg.object_id, charger
+        )
         return charger
 
     def _remove_all_custom_marker_object_instances(self):
         for obj_id, obj in list(self._custom_objects.items()):
             if isinstance(obj, objects.CustomObject):
-                self.logger.info("Removing CustomObject instance: id %s = obj '%s'", obj_id, obj)
+                self.logger.info(
+                    "Removing CustomObject instance: id %s = obj '%s'", obj_id, obj
+                )
                 self._custom_objects.pop(obj_id, None)
 
     def _remove_all_fixed_custom_object_instances(self):
         for obj_id, obj in list(self._custom_objects.items()):
             if isinstance(obj, objects.FixedCustomObject):
-                self.logger.info("Removing FixedCustomObject instance: id %s = obj '%s'", obj_id, obj)
+                self.logger.info(
+                    "Removing FixedCustomObject instance: id %s = obj '%s'", obj_id, obj
+                )
                 self._custom_objects.pop(obj_id, None)
 
     #### Private Event Handlers ####
@@ -862,17 +958,36 @@ class World(util.Component):
     def _on_face_observed(self, _robot, _event_type, msg):
         """Adds a newly observed face to the world view."""
         if msg.face_id not in self._faces:
-            pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
-                             q0=msg.pose.q0, q1=msg.pose.q1,
-                             q2=msg.pose.q2, q3=msg.pose.q3,
-                             origin_id=msg.pose.origin_id)
-            image_rect = util.ImageRect(msg.img_rect.x_top_left,
-                                        msg.img_rect.y_top_left,
-                                        msg.img_rect.width,
-                                        msg.img_rect.height)
-            face = self.face_factory(self.robot,
-                                     pose, image_rect, msg.face_id, msg.name, msg.expression, msg.expression_values,
-                                     msg.left_eye, msg.right_eye, msg.nose, msg.mouth, msg.timestamp)
+            pose = util.Pose(
+                x=msg.pose.x,
+                y=msg.pose.y,
+                z=msg.pose.z,
+                q0=msg.pose.q0,
+                q1=msg.pose.q1,
+                q2=msg.pose.q2,
+                q3=msg.pose.q3,
+                origin_id=msg.pose.origin_id,
+            )
+            image_rect = util.ImageRect(
+                msg.img_rect.x_top_left,
+                msg.img_rect.y_top_left,
+                msg.img_rect.width,
+                msg.img_rect.height,
+            )
+            face = self.face_factory(
+                self.robot,
+                pose,
+                image_rect,
+                msg.face_id,
+                msg.name,
+                msg.expression,
+                msg.expression_values,
+                msg.left_eye,
+                msg.right_eye,
+                msg.nose,
+                msg.mouth,
+                msg.timestamp,
+            )
             if face:
                 self._faces[face.face_id] = face
 
@@ -892,7 +1007,11 @@ class World(util.Component):
                 if charger:
                     self._objects[msg.object_id] = charger
 
-        elif first_custom_type <= msg.object_type < (first_custom_type + protocol.CustomType.Value("CUSTOM_TYPE_COUNT")):
+        elif (
+            first_custom_type
+            <= msg.object_type
+            < (first_custom_type + protocol.CustomType.Value("CUSTOM_TYPE_COUNT"))
+        ):
             if msg.object_id not in self._objects:
                 custom_object = self._allocate_custom_marker_object(msg)
                 if custom_object:
