@@ -37,6 +37,7 @@ Requirements:
 
 import os.path
 import sys
+
 from setuptools import find_packages, setup
 
 if sys.version_info < (3, 6, 1):
@@ -70,10 +71,10 @@ setup(
     name="pyHAVector",
     version=VERSION,
     description="The Vector SDK is a connected vision- and character-based robotics platform for everyone.",
-    url='https://github.com/mtrab/pyhavector',
-    author='Anki, Inc',
-    author_email='developer@anki.com',
-    license='Apache License, Version 2.0',
+    url="https://github.com/mtrab/pyhavector",
+    author="Anki, Inc",
+    author_email="developer@anki.com",
+    license="Apache License, Version 2.0",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",

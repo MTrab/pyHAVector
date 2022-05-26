@@ -26,6 +26,6 @@ from .version import __version__
 logger = logging.getLogger("vector")  # pylint: disable=invalid-name
 
 if sys.version_info < (3, 6, 1):
-    sys.exit('vector requires Python 3.6.1 or later')
+    sys.exit("vector requires Python 3.6.1 or later")
 
 __all__ = ["Robot", "AsyncRobot", "logger", "messaging", "__version__"]
