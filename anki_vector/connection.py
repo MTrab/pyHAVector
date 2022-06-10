@@ -486,7 +486,7 @@ class Connection:
         """
         if self._thread is threading.current_thread():
             return asyncio.ensure_future(
-                self._release_control(timeout=timeout), loop=self._loop
+                self._release_control(timeout=timeout)
             )
         return self.run_coroutine(self._release_control(timeout=timeout))
 
