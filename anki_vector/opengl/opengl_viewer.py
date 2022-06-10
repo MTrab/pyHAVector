@@ -751,7 +751,7 @@ class OpenGLViewer:
             self._render_3d_view(self._main_window)
 
         except KeyboardInterrupt:
-            self._logger.info("_display caught KeyboardInterrupt - exitting")
+            self._logger.debug("_display caught KeyboardInterrupt - exitting")
             self._close_event.set()
 
     def run(self):

@@ -593,7 +593,7 @@ class Connection:
                 channel_credentials, call_credentials
             )
 
-            self._logger.info(
+            self._logger.debug(
                 f"Connecting to {self.host} for {self.name} using {self.cert_file}"
             )
             self._channel = aiogrpc.secure_channel(
@@ -703,13 +703,13 @@ class Connection:
             ):
                 response_type = response.WhichOneof("response_type")
                 if response_type == "control_granted_response":
-                    self._logger.info(
+                    self._logger.debug(
                         f"BehaviorControl {MessageToString(response, as_one_line=True)}"
                     )
                     self._control_events.update(True)
                 elif response_type == "control_lost_event":
                     self._cancel_active()
-                    self._logger.info(
+                    self._logger.debug(
                         f"BehaviorControl {MessageToString(response, as_one_line=True)}"
                     )
                     self._control_events.update(False)
