@@ -673,7 +673,7 @@ class Connection:
             async def wait_until_done():
                 return await self._done_signal.wait()
 
-            self._loop.run_until_complete(wait_until_done())
+            # self._loop.run_until_complete(wait_until_done())
         finally:
             self._loop.close()
 
