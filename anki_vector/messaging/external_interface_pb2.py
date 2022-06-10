@@ -25,8 +25,12 @@ from anki_vector.messaging import cube_pb2 as anki__vector_dot_messaging_dot_cub
 from anki_vector.messaging import (
     messages_pb2 as anki__vector_dot_messaging_dot_messages__pb2,
 )
-from anki_vector.messaging import nav_map_pb2 as anki__vector_dot_messaging_dot_nav__map__pb2
-from anki_vector.messaging import shared_pb2 as anki__vector_dot_messaging_dot_shared__pb2
+from anki_vector.messaging import (
+    nav_map_pb2 as anki__vector_dot_messaging_dot_nav__map__pb2,
+)
+from anki_vector.messaging import (
+    shared_pb2 as anki__vector_dot_messaging_dot_shared__pb2,
+)
 
 DESCRIPTOR = _descriptor.FileDescriptor(
     name="anki_vector/messaging/external_interface.proto",

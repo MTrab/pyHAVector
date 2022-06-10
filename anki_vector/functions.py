@@ -6,13 +6,14 @@ import platform
 import socket
 from pathlib import Path
 
-import anki_vector
 import grpc
-from anki_vector import messaging
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+
+import anki_vector
+from anki_vector import messaging
 
 _LOGGER = logging.getLogger(__name__)
 
