@@ -51,7 +51,12 @@ from typing import List
 
 from anki_vector import nav_map, util
 from anki_vector.faces import Face
-from anki_vector.objects import CustomObject, FixedCustomObject, LightCube, ObservableObject
+from anki_vector.objects import (
+    CustomObject,
+    FixedCustomObject,
+    LightCube,
+    ObservableObject,
+)
 
 from . import opengl
 
