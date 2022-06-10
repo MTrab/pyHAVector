@@ -56,7 +56,7 @@ from typing import Dict, List
 
 from pkg_resources import resource_stream
 
-from vector import util
+from anki_vector import util
 
 
 # TODO Move to exceptions.py

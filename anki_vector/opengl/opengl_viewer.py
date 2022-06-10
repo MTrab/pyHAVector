@@ -58,7 +58,7 @@ import multiprocessing as mp
 import sys
 from typing import List
 
-from vector import nav_map, util
+from anki_vector import nav_map, util
 
 from . import opengl, opengl_vector
 

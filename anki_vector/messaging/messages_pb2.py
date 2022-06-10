@@ -16,10 +16,10 @@ from google.protobuf.internal import enum_type_wrapper
 _sym_db = _symbol_database.Default()
 
 
-from vector.messaging import (
+from anki_vector.messaging import (
     extensions_pb2 as anki__vector_dot_messaging_dot_extensions__pb2,
 )
-from vector.messaging import (
+from anki_vector.messaging import (
     response_status_pb2 as anki__vector_dot_messaging_dot_response__status__pb2,
 )
 

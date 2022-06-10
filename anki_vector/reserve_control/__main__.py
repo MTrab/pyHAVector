@@ -23,7 +23,7 @@ High priority behaviors like returning to the charger in a low battery situation
 or retreating from a cliff will still take precedence.
 """
 
-from vector import behavior, util
+from anki_vector import behavior, util
 
 
 def hold_control():

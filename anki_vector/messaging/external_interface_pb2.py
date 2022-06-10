@@ -18,15 +18,15 @@ _sym_db = _symbol_database.Default()
 
 from google.api import annotations_pb2 as google_dot_api_dot_annotations__pb2
 
-from vector.messaging import (
+from anki_vector.messaging import (
     behavior_pb2 as anki__vector_dot_messaging_dot_behavior__pb2,
 )
-from vector.messaging import cube_pb2 as anki__vector_dot_messaging_dot_cube__pb2
-from vector.messaging import (
+from anki_vector.messaging import cube_pb2 as anki__vector_dot_messaging_dot_cube__pb2
+from anki_vector.messaging import (
     messages_pb2 as anki__vector_dot_messaging_dot_messages__pb2,
 )
-from vector.messaging import nav_map_pb2 as anki__vector_dot_messaging_dot_nav__map__pb2
-from vector.messaging import shared_pb2 as anki__vector_dot_messaging_dot_shared__pb2
+from anki_vector.messaging import nav_map_pb2 as anki__vector_dot_messaging_dot_nav__map__pb2
+from anki_vector.messaging import shared_pb2 as anki__vector_dot_messaging_dot_shared__pb2
 
 DESCRIPTOR = _descriptor.FileDescriptor(
     name="anki_vector/messaging/external_interface.proto",

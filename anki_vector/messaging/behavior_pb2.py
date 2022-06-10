@@ -15,7 +15,7 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from vector.messaging import (
+from anki_vector.messaging import (
     messages_pb2 as anki__vector_dot_messaging_dot_messages__pb2,
 )
 

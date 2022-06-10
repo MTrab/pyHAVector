@@ -49,9 +49,9 @@ import math
 import time
 from typing import List
 
-from vector import nav_map, util
-from vector.faces import Face
-from vector.objects import CustomObject, FixedCustomObject, LightCube, ObservableObject
+from anki_vector import nav_map, util
+from anki_vector.faces import Face
+from anki_vector.objects import CustomObject, FixedCustomObject, LightCube, ObservableObject
 
 from . import opengl
 

@@ -15,20 +15,20 @@ from google.protobuf import symbol_database as _symbol_database
 _sym_db = _symbol_database.Default()
 
 
-from vector.messaging import (
+from anki_vector.messaging import (
     behavior_pb2 as anki__vector_dot_messaging_dot_behavior__pb2,
 )
-from vector.messaging import cube_pb2 as anki__vector_dot_messaging_dot_cube__pb2
-from vector.messaging import (
+from anki_vector.messaging import cube_pb2 as anki__vector_dot_messaging_dot_cube__pb2
+from anki_vector.messaging import (
     extensions_pb2 as anki__vector_dot_messaging_dot_extensions__pb2,
 )
-from vector.messaging import (
+from anki_vector.messaging import (
     messages_pb2 as anki__vector_dot_messaging_dot_messages__pb2,
 )
-from vector.messaging import (
+from anki_vector.messaging import (
     response_status_pb2 as anki__vector_dot_messaging_dot_response__status__pb2,
 )
-from vector.messaging import (
+from anki_vector.messaging import (
     settings_pb2 as anki__vector_dot_messaging_dot_settings__pb2,
 )
 

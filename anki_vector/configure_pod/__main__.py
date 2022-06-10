@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-***Anki Vector Python SDK Setup***
+***Vector EscapePod Python SDK Setup***
 
 Vector requires all requests be authorized by an authenticated Anki user.
 
@@ -31,6 +31,7 @@ import os
 import platform
 import re
 import socket
+import ssl
 import sys
 from getpass import getpass
 from pathlib import Path
@@ -50,45 +51,8 @@ except:  # pylint: disable=bare-except
         return text
 
 
-import vector
-from vector import messaging
-
-
-class ApiHandler:
-    def __init__(self, headers: dict, url: str):
-        self._headers = headers
-        self._url = url
-
-    @property
-    def headers(self):
-        return self._headers
-
-    @property
-    def url(self):
-        return self._url
-
-
-class Api:
-    def __init__(self):
-        self._handler = ApiHandler(
-            headers={
-                "User-Agent": "Vector-sdk/{} {}/{}".format(
-                    vector.__version__,
-                    platform.python_implementation(),
-                    platform.python_version(),
-                ),
-                "Anki-App-Key": "aung2ieCho3aiph7Een3Ei",
-            },
-            url="https://accounts.api.anki.com/1/sessions",
-        )
-
-    @property
-    def name(self):
-        return "Anki Cloud"
-
-    @property
-    def handler(self):
-        return self._handler
+import anki_vector
+from anki_vector import messaging
 
 
 def get_serial(serial=None):
@@ -110,19 +74,16 @@ def get_serial(serial=None):
     return serial
 
 
-def get_cert(serial=None):
-    serial = get_serial(serial)
-    print("\nDownloading Vector certificate from Anki...", end="")
+def get_cert(hostname=None):
+    print("\nDownloading Vector certificate...", end="")
     sys.stdout.flush()
-    r = requests.get(
-        "https://session-certs.token.global.anki-services.com/vic/{}".format(serial)
-    )
-    if r.status_code != 200:
-        print(colored(" ERROR", "red"))
-        sys.exit(r.content)
-    print(colored(" DONE", "green"))
-    cert = r.content
-    return cert, serial
+
+    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    sock = context.wrap_socket(conn, server_hostname=hostname)
+    sock.connect((hostname, 443))
+    cert = ssl.DER_cert_to_PEM_cert(sock.getpeercert(True))
+    return str.encode(cert)
 
 
 def user_authentication(session_id: bytes, cert: bytes, ip: str, name: str) -> str:
@@ -182,27 +143,6 @@ def user_authentication(session_id: bytes, cert: bytes, ip: str, name: str) -> s
 
     print(colored(" DONE\n", "green"))
     return response.client_token_guid
-
-
-def get_session_token(api, username=None):
-    print(
-        "Enter your email and password. Make sure to use the same account that was used to set up your Vector."
-    )
-    if not username:
-        username = input("Enter Email: ")
-    else:
-        print("Using email from command line: {}".format(colored(username, "cyan")))
-    password = getpass("Enter Password: ")
-    payload = {"username": username, "password": password}
-
-    print("\nAuthenticating with {}...".format(api.name), end="")
-    sys.stdout.flush()
-    r = requests.post(api.handler.url, data=payload, headers=api.handler.headers)
-    if r.status_code != 200:
-        print(colored(" ERROR", "red"))
-        sys.exit(r.content)
-    print(colored(" DONE\n", "green"))
-    return json.loads(r.content)
 
 
 def standardize_name(robot_name):
@@ -325,7 +265,7 @@ def write_config(serial, cert_file=None, ip=None, name=None, guid=None, clear=Tr
             os.remove(temp_file)
 
 
-def main(api):
+def main():
     parser = argparse.ArgumentParser(
         description=(
             "Vector requires all requests be authorized by an authenticated Anki user. "
@@ -339,7 +279,6 @@ def main(api):
             "https://www.anki.com/en-us/company/terms-and-conditions"
         ),
     )
-    parser.add_argument("-e", "--email", help="The email used by your Anki account.")
     parser.add_argument(
         "-i",
         "--ip",
@@ -394,7 +333,8 @@ def main(api):
         sys.exit("Stopping...")
 
     name, ip = get_name_and_ip(args.name, args.ip)
-    cert, serial = get_cert(args.serial)
+    serial = get_serial(args.serial)
+    cert = get_cert(ip)
 
     home = Path.home()
     anki_dir = home / ".anki_vector"
@@ -402,11 +342,7 @@ def main(api):
     cert_file = save_cert(cert, name, serial, anki_dir)
     validate_cert_name(cert_file, name)
 
-    token = get_session_token(api, args.email)
-    if not token.get("session"):
-        sys.exit("Session error: {}".format(token))
-
-    guid = user_authentication(token["session"]["session_token"], cert, ip, name)
+    guid = user_authentication("Anything1", cert, ip, name)
 
     # Store credentials in the .anki_vector directory's sdk_config.ini file
     write_config(serial, cert_file, ip, name, guid)
@@ -414,4 +350,4 @@ def main(api):
 
 
 if __name__ == "__main__":
-    main(Api())
+    main()
