@@ -48,7 +48,7 @@ HERE = os.path.abspath(os.path.dirname(__file__))
 
 def fetch_version():
     """Get the version from the package"""
-    with open(os.path.join(HERE, "vector", "version.py")) as version_file:
+    with open(os.path.join(HERE, "anki_vector", "version.py")) as version_file:
         versions = {}
         exec(version_file.read(), versions)
         return versions
