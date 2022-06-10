@@ -671,9 +671,7 @@ class Connection:
         try:
 
             async def wait_until_done():
-                while not self._done_signal.is_set():
-                    await asyncio.sleep(1)
-                # return await self._done_signal.wait()
+                return await self._done_signal.wait()
 
             self._loop.run_until_complete(wait_until_done())
         finally:
