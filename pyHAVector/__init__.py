@@ -17,8 +17,6 @@ class Robot:
         ip: str = None,
         name: str = None,
         config: dict = None,
-        email: str = None,
-        password: str = None,
         settings_dir: str = None,
         behavior_activation_timeout: int = 10,
         cache_animation_lists: bool = True,
@@ -140,6 +138,6 @@ class Robot:
     ) -> protocol.SayTextResponse:
         """Let Vector have a voice."""
         say_text_request = protocol.SayTextRequest(
-            text=text, use_vector_voice=use_vector_voice,duration_scalar=1.0
+            text=text, use_vector_voice=use_vector_voice, duration_scalar=1.0
         )
         return await self.conn.grpc_interface.SayText(say_text_request)
