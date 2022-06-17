@@ -20,8 +20,8 @@ mDNS (multicast DNS) is a protocol for sending UDP packets containing a DNS quer
 devices on your Local Area Network. If a device knows how to answer the DNS query, it
 will respond by multicasting a UDP packet containing the relevant DNS records.
 """
-import sys
 from threading import Condition
+import sys
 
 
 class VectorMdns:  # pylint: disable=too-few-public-methods
@@ -56,9 +56,7 @@ class VectorMdns:  # pylint: disable=too-few-public-methods
         try:
             from zeroconf import ServiceBrowser, Zeroconf
         except ImportError:
-            sys.exit(
-                "Cannot import from Zeroconf: Do `pip3 install --user zeroconf` to install"
-            )
+            sys.exit("Cannot import from Zeroconf: Do `pip3 install --user zeroconf` to install")
 
         # create a Condition object and acquire the underlying lock
         cond = Condition()
@@ -86,7 +84,7 @@ class VectorMdns:  # pylint: disable=too-few-public-methods
         if listener.ipv4 is None:
             return None
 
-        return {"ipv4": listener.ipv4, "name": listener.name}
+        return {'ipv4': listener.ipv4, 'name': listener.name}
 
 
 class _MdnsListener:
@@ -104,15 +102,10 @@ class _MdnsListener:
 
     @staticmethod
     def _bytes_to_str_ipv4(ip_bytes):
-        return (
-            str(ip_bytes[0])
-            + "."
-            + str(ip_bytes[1])
-            + "."
-            + str(ip_bytes[2])
-            + "."
-            + str(ip_bytes[3])
-        )
+        return str(ip_bytes[0]) + "." +  \
+            str(ip_bytes[1]) + "." +  \
+            str(ip_bytes[2]) + "." +  \
+            str(ip_bytes[3])
 
     def remove_service(self, zeroconf, mdns_type, name):
         # detect service removal
@@ -122,14 +115,10 @@ class _MdnsListener:
         # detect service
         info = zeroconf.get_service_info(mdns_type, name)
 
-        if (self.name_filter is None) or (
-            info.server.lower() == self.name_filter.lower()
-        ):
+        if (self.name_filter is None) or (info.server.lower() == self.name_filter.lower()):
             # found a match for our filter or there is no filter
             self.cond.acquire()
-            self.ipv4 = _MdnsListener._bytes_to_str_ipv4(
-                info.address
-            )  # info.address is IPv4 (DNS record type 'A')
+            self.ipv4 = _MdnsListener._bytes_to_str_ipv4(info.address)   # info.address is IPv4 (DNS record type 'A')
             self.name = info.server
 
             # cause anything waiting for this condition to end waiting

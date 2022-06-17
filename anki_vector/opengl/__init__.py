@@ -24,9 +24,9 @@ Warning:
     This package requires Python to have the PyOpenGL package installed, along
     with an implementation of GLUT (OpenGL Utility Toolkit).
 
-    To install the Python packages on Mac and Linux do ``python3 -m pip install --user "cyb3r_vector_sdk[3dviewer]"``
+    To install the Python packages on Mac and Linux do ``python3 -m pip install --user "anki_vector[3dviewer]"``
 
-    To install the Python packages on Windows do ``py -3 -m pip install --user "cyb3r_vector_sdk[3dviewer]"``
+    To install the Python packages on Windows do ``py -3 -m pip install --user "anki_vector[3dviewer]"``
 
     On Windows and Linux you must also install freeglut (macOS / OSX has one
     preinstalled).
@@ -44,15 +44,13 @@ import multiprocessing as mp
 from . import opengl_viewer
 
 
-def main(
-    close_event: mp.Event,
-    input_intent_queue: mp.Queue,
-    nav_map_queue: mp.Queue,
-    world_frame_queue: mp.Queue,
-    extra_render_function_queue: mp.Queue,
-    user_data_queue: mp.Queue,
-    show_viewer_controls: bool = True,
-):
+def main(close_event: mp.Event,
+         input_intent_queue: mp.Queue,
+         nav_map_queue: mp.Queue,
+         world_frame_queue: mp.Queue,
+         extra_render_function_queue: mp.Queue,
+         user_data_queue: mp.Queue,
+         show_viewer_controls: bool = True):
     """Run the 3D Viewer window. This is intended to run on a background process.
 
     .. code-block:: python
@@ -92,16 +90,14 @@ def main(
         May be used by ``extra_render_function_queue`` functions.
     :param show_viewer_controls: Specifies whether to draw controls on the view.
     """
-    viewer = opengl_viewer.OpenGLViewer(
-        close_event,
-        input_intent_queue,
-        nav_map_queue,
-        world_frame_queue,
-        extra_render_function_queue,
-        user_data_queue,
-        show_viewer_controls=show_viewer_controls,
-    )
+    viewer = opengl_viewer.OpenGLViewer(close_event,
+                                        input_intent_queue,
+                                        nav_map_queue,
+                                        world_frame_queue,
+                                        extra_render_function_queue,
+                                        user_data_queue,
+                                        show_viewer_controls=show_viewer_controls)
     viewer.run()
 
 
-__all__ = ["main"]
+__all__ = ['main']

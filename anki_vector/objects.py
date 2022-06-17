@@ -37,22 +37,10 @@ Vector connects to his Light Cube with BLE.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = [
-    "LIGHT_CUBE_1_TYPE",
-    "OBJECT_VISIBILITY_TIMEOUT",
-    "EvtObjectAppeared",
-    "EvtObjectDisappeared",
-    "EvtObjectFinishedMove",
-    "EvtObjectObserved",
-    "Charger",
-    "CustomObjectArchetype",
-    "CustomObject",
-    "CustomObjectMarkers",
-    "CustomObjectTypes",
-    "FixedCustomObject",
-    "LightCube",
-    "ObservableObject",
-]
+__all__ = ['LIGHT_CUBE_1_TYPE', 'OBJECT_VISIBILITY_TIMEOUT',
+           'EvtObjectAppeared', 'EvtObjectDisappeared', 'EvtObjectFinishedMove', 'EvtObjectObserved',
+           'Charger', 'CustomObjectArchetype', 'CustomObject', 'CustomObjectMarkers', 'CustomObjectTypes',
+           'FixedCustomObject', 'LightCube', 'ObservableObject']
 
 # TODO Curious why events like the following aren't listed? At least some do seem to be supported in other parts of anki_vector.
 # EvtObjectTapped, EvtObjectConnectChanged, EvtObjectConnected, EvtObjectLocated, EvtObjectMoving, EvtObjectMovingStarted, EvtObjectMovingStopped
@@ -64,6 +52,7 @@ import time
 
 from . import connection, lights, util
 from .events import Events
+
 from .messaging import protocol
 
 #: Length of time in seconds to go without receiving an observed event before
@@ -71,7 +60,7 @@ from .messaging import protocol
 OBJECT_VISIBILITY_TIMEOUT = 0.8
 
 
-class EvtObjectObserved:  # pylint: disable=too-few-public-methods
+class EvtObjectObserved():  # pylint: disable=too-few-public-methods
     """Triggered whenever an object is visually identified by the robot.
 
     A stream of these events are produced while an object is visible to the robot.
@@ -118,7 +107,7 @@ class EvtObjectObserved:  # pylint: disable=too-few-public-methods
         self.pose = pose
 
 
-class EvtObjectAppeared:  # pylint: disable=too-few-public-methods
+class EvtObjectAppeared():  # pylint: disable=too-few-public-methods
     """Triggered whenever an object is first visually identified by a robot.
 
     This differs from EvtObjectObserved in that it's only triggered when
@@ -168,7 +157,7 @@ class EvtObjectAppeared:  # pylint: disable=too-few-public-methods
         self.pose = pose
 
 
-class EvtObjectDisappeared:  # pylint: disable=too-few-public-methods
+class EvtObjectDisappeared():  # pylint: disable=too-few-public-methods
     """Triggered whenever an object that was previously being observed is no longer visible.
 
     .. testcode::
@@ -205,7 +194,7 @@ class EvtObjectDisappeared:  # pylint: disable=too-few-public-methods
         self.obj = obj
 
 
-class EvtObjectFinishedMove:  # pylint: disable=too-few-public-methods
+class EvtObjectFinishedMove():  # pylint: disable=too-few-public-methods
     """Triggered when an active object stops moving.
 
     :param obj: The object that moved
@@ -218,7 +207,7 @@ class EvtObjectFinishedMove:  # pylint: disable=too-few-public-methods
 
 
 class ObservableObject(util.Component):
-    """The base type for anything Vector can see."""
+    """Represents any object Vector can see in the world."""
 
     visibility_timeout = OBJECT_VISIBILITY_TIMEOUT
 
@@ -251,16 +240,12 @@ class ObservableObject(util.Component):
     def __repr__(self):
         extra = self._repr_values()
         if extra:
-            extra = " " + extra
+            extra = ' ' + extra
         if self.pose:
-            extra += " pose=%s" % self.pose
+            extra += ' pose=%s' % self.pose
 
-        return "<%s%s is_visible=%s>" % (
-            self.__class__.__name__,
-            extra,
-            self.is_visible,
-        )
-
+        return '<%s%s is_visible=%s>' % (self.__class__.__name__,
+                                         extra, self.is_visible)
     #### Properties ####
 
     @property
@@ -337,48 +322,20 @@ class ObservableObject(util.Component):
     #### Private Methods ####
 
     def _repr_values(self):  # pylint: disable=no-self-use
-        return ""
-
-    def _dispatch_observed_event(self, image_rect):
-        # Override in subclass if there is a specific event for that type
-        self.conn.run_soon(
-            self._robot.events.dispatch_event(
-                EvtObjectObserved(self, image_rect, self._pose), Events.object_observed
-            )
-        )
-
-    def _dispatch_appeared_event(self, image_rect):
-        # Override in subclass if there is a specific event for that type
-        self.conn.run_soon(
-            self._robot.events.dispatch_event(
-                EvtObjectAppeared(self, image_rect, self._pose), Events.object_appeared
-            )
-        )
-
-    def _dispatch_disappeared_event(self):
-        # Override in subclass if there is a specific event for that type
-        self.conn.run_soon(
-            self._robot.events.dispatch_event(
-                EvtObjectDisappeared(self), Events.object_disappeared
-            )
-        )
+        return ''
 
     def _reset_observed_timeout_handler(self):
         if self._observed_timeout_handler is not None:
             self._observed_timeout_handler.cancel()
-        self._observed_timeout_handler = self.conn.loop.call_later(
-            self.visibility_timeout, self._observed_timeout
-        )
+        self._observed_timeout_handler = self.conn.loop.call_later(self.visibility_timeout, self._observed_timeout)
 
     def _observed_timeout(self):
         # Triggered when the element is no longer considered "visible".
         # i.e. visibility_timeout seconds after the last observed event.
         self._is_visible = False
-        self._dispatch_disappeared_event()
+        self.conn.run_soon(self._robot.events.dispatch_event(EvtObjectDisappeared(self), Events.object_disappeared))
 
-    def _on_observed(
-        self, pose: util.Pose, image_rect: util.ImageRect, robot_timestamp: int
-    ):
+    def _on_observed(self, pose: util.Pose, image_rect: util.ImageRect, robot_timestamp: int):
         # Called from subclasses on their corresponding observed messages.
         newly_visible = self._is_visible is False
         self._is_visible = True
@@ -390,10 +347,10 @@ class ObservableObject(util.Component):
         self._last_observed_image_rect = image_rect
         self._pose = pose
         self._reset_observed_timeout_handler()
-        self._dispatch_observed_event(image_rect)
+        self.conn.run_soon(self._robot.events.dispatch_event(EvtObjectObserved(self, image_rect, pose), Events.object_observed))
 
         if newly_visible:
-            self._dispatch_appeared_event(image_rect)
+            self.conn.run_soon(self._robot.events.dispatch_event(EvtObjectAppeared(self, image_rect, pose), Events.object_appeared))
 
 
 #: LIGHT_CUBE_1_TYPE's markers look like 2 concentric circles with lines and gaps.
@@ -478,68 +435,59 @@ class LightCube(ObservableObject):
         self._factory_id: str = None
 
         #: Subscribe to relevant events
-        self.robot.events.subscribe(
-            self._on_object_connection_state_changed, Events.object_connection_state
-        )
+        self.robot.events.subscribe(self._on_object_connection_state_changed,
+                                    Events.object_connection_state)
 
-        self.robot.events.subscribe(self._on_object_moved, Events.object_moved)
+        self.robot.events.subscribe(self._on_object_moved,
+                                    Events.object_moved)
 
-        self.robot.events.subscribe(
-            self._on_object_stopped_moving, Events.object_stopped_moving
-        )
+        self.robot.events.subscribe(self._on_object_stopped_moving,
+                                    Events.object_stopped_moving)
 
-        self.robot.events.subscribe(
-            self._on_object_up_axis_changed, Events.object_up_axis_changed
-        )
+        self.robot.events.subscribe(self._on_object_up_axis_changed,
+                                    Events.object_up_axis_changed)
 
-        self.robot.events.subscribe(self._on_object_tapped, Events.object_tapped)
+        self.robot.events.subscribe(self._on_object_tapped,
+                                    Events.object_tapped)
 
-        self.robot.events.subscribe(
-            self._on_object_observed, Events.robot_observed_object
-        )
+        self.robot.events.subscribe(self._on_object_observed,
+                                    Events.robot_observed_object)
 
-        self.robot.events.subscribe(
-            self._on_object_connection_lost, Events.cube_connection_lost
-        )
+        self.robot.events.subscribe(self._on_object_connection_lost,
+                                    Events.cube_connection_lost)
 
     #### Public Methods ####
 
     def teardown(self):
         """All faces will be torn down by the world when no longer needed."""
-        self.robot.events.unsubscribe(
-            self._on_object_connection_state_changed, Events.object_connection_state
-        )
+        self.robot.events.unsubscribe(self._on_object_connection_state_changed,
+                                      Events.object_connection_state)
 
-        self.robot.events.unsubscribe(self._on_object_moved, Events.object_moved)
+        self.robot.events.unsubscribe(self._on_object_moved,
+                                      Events.object_moved)
 
-        self.robot.events.unsubscribe(
-            self._on_object_stopped_moving, Events.object_stopped_moving
-        )
+        self.robot.events.unsubscribe(self._on_object_stopped_moving,
+                                      Events.object_stopped_moving)
 
-        self.robot.events.unsubscribe(
-            self._on_object_up_axis_changed, Events.object_up_axis_changed
-        )
+        self.robot.events.unsubscribe(self._on_object_up_axis_changed,
+                                      Events.object_up_axis_changed)
 
-        self.robot.events.unsubscribe(self._on_object_tapped, Events.object_tapped)
+        self.robot.events.unsubscribe(self._on_object_tapped,
+                                      Events.object_tapped)
 
-        self.robot.events.unsubscribe(
-            self._on_object_observed, Events.robot_observed_object
-        )
+        self.robot.events.unsubscribe(self._on_object_observed,
+                                      Events.robot_observed_object)
 
-        self.robot.events.unsubscribe(
-            self._on_object_connection_lost, Events.cube_connection_lost
-        )
+        self.robot.events.unsubscribe(self._on_object_connection_lost,
+                                      Events.cube_connection_lost)
 
-    # TODO: add return type hint
     @connection.on_connection_thread()
-    async def set_light_corners(
-        self,
-        light1: lights.Light,
-        light2: lights.Light,
-        light3: lights.Light,
-        light4: lights.Light,
-        color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE,
-    ):
+    async def set_light_corners(self,
+                                light1: lights.Light,
+                                light2: lights.Light,
+                                light3: lights.Light,
+                                light4: lights.Light,
+                                color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set the light for each corner.
 
         .. testcode::
@@ -568,30 +516,23 @@ class LightCube(ObservableObject):
         :param light4: The settings for the fourth light.
         :param color_profile: The profile to be used for the cube lights
         """
-        params = lights.package_request_params(
-            (light1, light2, light3, light4), color_profile
-        )
+        params = lights.package_request_params((light1, light2, light3, light4), color_profile)
         req = protocol.SetCubeLightsRequest(
             object_id=self._object_id,
-            on_color=params["on_color"],
-            off_color=params["off_color"],
-            on_period_ms=params["on_period_ms"],
-            off_period_ms=params["off_period_ms"],
-            transition_on_period_ms=params["transition_on_period_ms"],
-            transition_off_period_ms=params["transition_off_period_ms"],
+            on_color=params['on_color'],
+            off_color=params['off_color'],
+            on_period_ms=params['on_period_ms'],
+            off_period_ms=params['off_period_ms'],
+            transition_on_period_ms=params['transition_on_period_ms'],
+            transition_off_period_ms=params['transition_off_period_ms'],
             offset=[0, 0, 0, 0],
             relative_to_x=0.0,
             relative_to_y=0.0,
             rotate=False,
-            make_relative=protocol.SetCubeLightsRequest.OFF,
-        )  # pylint: disable=no-member
+            make_relative=protocol.SetCubeLightsRequest.OFF)  # pylint: disable=no-member
         return await self.grpc_interface.SetCubeLights(req)
 
-    def set_lights(
-        self,
-        light: lights.Light,
-        color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE,
-    ):
+    def set_lights(self, light: lights.Light, color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set all lights on the cube
 
         .. testcode::
@@ -617,9 +558,7 @@ class LightCube(ObservableObject):
         """
         return self.set_light_corners(light, light, light, light, color_profile)
 
-    def set_lights_off(
-        self, color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE
-    ):
+    def set_lights_off(self, color_profile: lights.ColorProfile = lights.WHITE_BALANCED_CUBE_PROFILE):
         """Set all lights off on the cube
 
         .. testcode::
@@ -644,18 +583,12 @@ class LightCube(ObservableObject):
         :param color_profile: The profile to be used for the cube lights
         """
 
-        return self.set_light_corners(
-            lights.off_light,
-            lights.off_light,
-            lights.off_light,
-            lights.off_light,
-            color_profile,
-        )
+        return self.set_light_corners(lights.off_light, lights.off_light, lights.off_light, lights.off_light, color_profile)
 
     #### Private Methods ####
 
     def _repr_values(self):
-        return "object_id=%s" % self.object_id
+        return 'object_id=%s' % self.object_id
 
     #### Properties ####
 
@@ -1035,12 +968,7 @@ class LightCube(ObservableObject):
             # We cannot currently rely on robot ensuring that object ID remains static
             # E.g. in the case of a cube disconnecting and reconnecting it's removed
             # and then re-added to blockworld which results in a new ID.
-            self.logger.warning(
-                "Changing object_id for %s from %s to %s",
-                self.__class__,
-                self._object_id,
-                value,
-            )
+            self.logger.warning("Changing object_id for %s from %s to %s", self.__class__, self._object_id, value)
         else:
             self.logger.debug("Setting object_id for %s to %s", self.__class__, value)
         self._object_id = value
@@ -1052,18 +980,14 @@ class LightCube(ObservableObject):
             self._object_id = msg.object_id
 
             if self._factory_id != msg.factory_id:
-                self.logger.debug(
-                    "Factory id changed from {0} to {1}".format(
-                        self._factory_id, msg.factory_id
-                    )
-                )
+                self.logger.debug('Factory id changed from {0} to {1}'.format(self._factory_id, msg.factory_id))
                 self._factory_id = msg.factory_id
 
             if self._is_connected != msg.connected:
                 if msg.connected:
-                    self.logger.debug("Object connected: %s", self)
+                    self.logger.debug('Object connected: %s', self)
                 else:
-                    self.logger.debug("Object disconnected: %s", self)
+                    self.logger.debug('Object disconnected: %s', self)
                 self._is_connected = msg.connected
 
     def _on_object_moved(self, _robot, _event_type, msg):
@@ -1079,11 +1003,7 @@ class LightCube(ObservableObject):
                 self._last_moved_start_time = now
                 self._last_moved_start_robot_timestamp = msg.timestamp
         else:
-            self.logger.warning(
-                "An object not currently tracked by the world moved with id {0}".format(
-                    msg.object_id
-                )
-            )
+            self.logger.warning('An object not currently tracked by the world moved with id {0}'.format(msg.object_id))
 
     async def _on_object_stopped_moving(self, _robot, _event_type, msg):
         if msg.object_id == self._object_id:
@@ -1097,15 +1017,9 @@ class LightCube(ObservableObject):
             if self._is_moving:
                 self._is_moving = False
                 move_duration = now - self._last_moved_start_time
-            await self._robot.events.dispatch_event(
-                EvtObjectFinishedMove(self, move_duration), Events.object_finished_move
-            )
+            await self._robot.events.dispatch_event(EvtObjectFinishedMove(self, move_duration), Events.object_finished_move)
         else:
-            self.logger.warning(
-                "An object not currently tracked by the world stopped moving with id {0}".format(
-                    msg.object_id
-                )
-            )
+            self.logger.warning('An object not currently tracked by the world stopped moving with id {0}'.format(msg.object_id))
 
     def _on_object_up_axis_changed(self, _robot, _event_type, msg):
         if msg.object_id == self._object_id:
@@ -1116,11 +1030,7 @@ class LightCube(ObservableObject):
             self._last_up_axis_changed_time = now
             self._last_up_axis_changed_robot_timestamp = msg.timestamp
         else:
-            self.logger.warning(
-                "Up Axis changed on an object not currently tracked by the world with id {0}".format(
-                    msg.object_id
-                )
-            )
+            self.logger.warning('Up Axis changed on an object not currently tracked by the world with id {0}'.format(msg.object_id))
 
     def _on_object_tapped(self, _robot, _event_type, msg):
         if msg.object_id == self._object_id:
@@ -1130,31 +1040,19 @@ class LightCube(ObservableObject):
             self._last_tapped_time = now
             self._last_tapped_robot_timestamp = msg.timestamp
         else:
-            self.logger.warning(
-                "Tapped an object not currently tracked by the world with id {0}".format(
-                    msg.object_id
-                )
-            )
+            self.logger.warning('Tapped an object not currently tracked by the world with id {0}'.format(msg.object_id))
 
     def _on_object_observed(self, _robot, _event_type, msg):
         if msg.object_id == self._object_id:
 
-            pose = util.Pose(
-                x=msg.pose.x,
-                y=msg.pose.y,
-                z=msg.pose.z,
-                q0=msg.pose.q0,
-                q1=msg.pose.q1,
-                q2=msg.pose.q2,
-                q3=msg.pose.q3,
-                origin_id=msg.pose.origin_id,
-            )
-            image_rect = util.ImageRect(
-                msg.img_rect.x_top_left,
-                msg.img_rect.y_top_left,
-                msg.img_rect.width,
-                msg.img_rect.height,
-            )
+            pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
+                             q0=msg.pose.q0, q1=msg.pose.q1,
+                             q2=msg.pose.q2, q3=msg.pose.q3,
+                             origin_id=msg.pose.origin_id)
+            image_rect = util.ImageRect(msg.img_rect.x_top_left,
+                                        msg.img_rect.y_top_left,
+                                        msg.img_rect.width,
+                                        msg.img_rect.height)
             self._top_face_orientation_rad = msg.top_face_orientation_rad
 
             self._on_observed(pose, image_rect, msg.timestamp)
@@ -1187,18 +1085,16 @@ class Charger(ObservableObject):
 
         self._object_id = object_id
 
-        self.robot.events.subscribe(
-            self._on_object_observed, Events.robot_observed_object
-        )
+        self.robot.events.subscribe(self._on_object_observed,
+                                    Events.robot_observed_object)
 
     #### Public Methods ####
 
     def teardown(self):
         """All objects will be torn down by the world when the world closes."""
 
-        self.robot.events.unsubscribe(
-            self._on_object_observed, Events.robot_observed_object
-        )
+        self.robot.events.unsubscribe(self._on_object_observed,
+                                      Events.robot_observed_object)
 
     #### Properties ####
     @property
@@ -1225,12 +1121,7 @@ class Charger(ObservableObject):
             # We cannot currently rely on robot ensuring that object ID remains static
             # E.g. in the case of a cube disconnecting and reconnecting it's removed
             # and then re-added to blockworld which results in a new ID.
-            self.logger.warning(
-                "Changing object_id for %s from %s to %s",
-                self.__class__,
-                self._object_id,
-                value,
-            )
+            self.logger.warning("Changing object_id for %s from %s to %s", self.__class__, self._object_id, value)
         else:
             self.logger.debug("Setting object_id for %s to %s", self.__class__, value)
         self._object_id = value
@@ -1257,27 +1148,19 @@ class Charger(ObservableObject):
     def _on_object_observed(self, _robot, _event_type, msg):
         if msg.object_id == self._object_id:
 
-            pose = util.Pose(
-                x=msg.pose.x,
-                y=msg.pose.y,
-                z=msg.pose.z,
-                q0=msg.pose.q0,
-                q1=msg.pose.q1,
-                q2=msg.pose.q2,
-                q3=msg.pose.q3,
-                origin_id=msg.pose.origin_id,
-            )
-            image_rect = util.ImageRect(
-                msg.img_rect.x_top_left,
-                msg.img_rect.y_top_left,
-                msg.img_rect.width,
-                msg.img_rect.height,
-            )
+            pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
+                             q0=msg.pose.q0, q1=msg.pose.q1,
+                             q2=msg.pose.q2, q3=msg.pose.q3,
+                             origin_id=msg.pose.origin_id)
+            image_rect = util.ImageRect(msg.img_rect.x_top_left,
+                                        msg.img_rect.y_top_left,
+                                        msg.img_rect.width,
+                                        msg.img_rect.height)
 
             self._on_observed(pose, image_rect, msg.timestamp)
 
 
-class CustomObjectArchetype:
+class CustomObjectArchetype():
     """An object archetype defined by the SDK. It is bound to a specific objectType e.g ``CustomType00``.
 
     This defined object is given a size in the x,y and z axis. The dimensions
@@ -1292,16 +1175,14 @@ class CustomObjectArchetype:
     :meth:`~anki_vector.world.World.define_custom_wall`.
     """
 
-    def __init__(
-        self,
-        custom_type: protocol.CustomType,
-        x_size_mm: float,
-        y_size_mm: float,
-        z_size_mm: float,
-        marker_width_mm: float,
-        marker_height_mm: float,
-        is_unique: bool,
-    ):
+    def __init__(self,
+                 custom_type: protocol.CustomType,
+                 x_size_mm: float,
+                 y_size_mm: float,
+                 z_size_mm: float,
+                 marker_width_mm: float,
+                 marker_height_mm: float,
+                 is_unique: bool):
 
         self._custom_type = custom_type
         self._x_size_mm = x_size_mm
@@ -1414,15 +1295,13 @@ class CustomObjectArchetype:
     #### Private Methods ####
 
     def __repr__(self):
-        return (
-            "custom_type={self.custom_type} "
-            "x_size_mm={self.x_size_mm:.1f} "
-            "y_size_mm={self.y_size_mm:.1f} "
-            "z_size_mm={self.z_size_mm:.1f} "
-            "marker_width_mm={self.marker_width_mm:.1f} "
-            "marker_height_mm={self.marker_height_mm:.1f} "
-            "is_unique={self.is_unique}".format(self=self)
-        )
+        return ('custom_type={self.custom_type} '
+                'x_size_mm={self.x_size_mm:.1f} '
+                'y_size_mm={self.y_size_mm:.1f} '
+                'z_size_mm={self.z_size_mm:.1f} '
+                'marker_width_mm={self.marker_width_mm:.1f} '
+                'marker_height_mm={self.marker_height_mm:.1f} '
+                'is_unique={self.is_unique}'.format(self=self))
 
 
 class CustomObject(ObservableObject):
@@ -1439,15 +1318,17 @@ class CustomObject(ObservableObject):
     See :class:`CustomObjectMarkers`.
     """
 
-    def __init__(self, robot, archetype: CustomObjectArchetype, object_id: int, **kw):
+    def __init__(self,
+                 robot,
+                 archetype: CustomObjectArchetype,
+                 object_id: int, **kw):
         super().__init__(robot, **kw)
 
         self._object_id = object_id
         self._archetype = archetype
 
-        self.robot.events.subscribe(
-            self._on_object_observed, Events.robot_observed_object
-        )
+        self.robot.events.subscribe(self._on_object_observed,
+                                    Events.robot_observed_object)
 
     #### Public Methods ####
 
@@ -1457,9 +1338,8 @@ class CustomObject(ObservableObject):
         See :class:`CustomObjectMarkers`.
         """
 
-        self.robot.events.unsubscribe(
-            self._on_object_observed, Events.robot_observed_object
-        )
+        self.robot.events.unsubscribe(self._on_object_observed,
+                                      Events.robot_observed_object)
 
     #### Properties ####
 
@@ -1495,12 +1375,7 @@ class CustomObject(ObservableObject):
             # We cannot currently rely on robot ensuring that object ID remains static
             # E.g. in the case of a cube disconnecting and reconnecting it's removed
             # and then re-added to robot's internal world model which results in a new ID.
-            self.logger.warning(
-                "Changing object_id for %s from %s to %s",
-                self.__class__,
-                self._object_id,
-                value,
-            )
+            self.logger.warning("Changing object_id for %s from %s to %s", self.__class__, self._object_id, value)
         else:
             self.logger.debug("Setting object_id for %s to %s", self.__class__, value)
         self._object_id = value
@@ -1556,38 +1431,28 @@ class CustomObject(ObservableObject):
     #### Private Methods ####
 
     def _repr_values(self):
-        return (
-            "object_type={archetype.custom_type} "
-            "x_size_mm={archetype.x_size_mm:.1f} "
-            "y_size_mm={archetype.y_size_mm:.1f} "
-            "z_size_mm={archetype.z_size_mm:.1f} "
-            "is_unique={archetype.is_unique}".format(archetype=self._archetype)
-        )
+        return ('object_type={archetype.custom_type} '
+                'x_size_mm={archetype.x_size_mm:.1f} '
+                'y_size_mm={archetype.y_size_mm:.1f} '
+                'z_size_mm={archetype.z_size_mm:.1f} '
+                'is_unique={archetype.is_unique}'.format(archetype=self._archetype))
 
     def _on_object_observed(self, _robot, _event_type, msg):
         if msg.object_id == self._object_id:
 
-            pose = util.Pose(
-                x=msg.pose.x,
-                y=msg.pose.y,
-                z=msg.pose.z,
-                q0=msg.pose.q0,
-                q1=msg.pose.q1,
-                q2=msg.pose.q2,
-                q3=msg.pose.q3,
-                origin_id=msg.pose.origin_id,
-            )
-            image_rect = util.ImageRect(
-                msg.img_rect.x_top_left,
-                msg.img_rect.y_top_left,
-                msg.img_rect.width,
-                msg.img_rect.height,
-            )
+            pose = util.Pose(x=msg.pose.x, y=msg.pose.y, z=msg.pose.z,
+                             q0=msg.pose.q0, q1=msg.pose.q1,
+                             q2=msg.pose.q2, q3=msg.pose.q3,
+                             origin_id=msg.pose.origin_id)
+            image_rect = util.ImageRect(msg.img_rect.x_top_left,
+                                        msg.img_rect.y_top_left,
+                                        msg.img_rect.width,
+                                        msg.img_rect.height)
 
             self._on_observed(pose, image_rect, msg.timestamp)
 
 
-class _CustomObjectType(collections.namedtuple("_CustomObjectType", "name id")):
+class _CustomObjectType(collections.namedtuple('_CustomObjectType', 'name id')):
     # Tuple mapping between Proto CustomObjectType name and ID
     # All instances will be members of CustomObjectType
 
@@ -1595,10 +1460,10 @@ class _CustomObjectType(collections.namedtuple("_CustomObjectType", "name id")):
     __slots__ = ()
 
     def __str__(self):
-        return "CustomObjectTypes.%s" % self.name
+        return 'CustomObjectTypes.%s' % self.name
 
 
-class CustomObjectTypes:  # pylint: disable=too-few-public-methods
+class CustomObjectTypes():  # pylint: disable=too-few-public-methods
     """Defines all available custom object types.
 
     For use with world.define_custom methods such as
@@ -1621,107 +1486,67 @@ class CustomObjectTypes:  # pylint: disable=too-few-public-methods
     """
 
     #: CustomType00 - the first custom object type
-    CustomType00 = _CustomObjectType(
-        "CustomType00", protocol.CustomType.Value("CUSTOM_TYPE_00")
-    )
+    CustomType00 = _CustomObjectType("CustomType00", protocol.CustomType.Value("CUSTOM_TYPE_00"))
 
     #:
-    CustomType01 = _CustomObjectType(
-        "CustomType01", protocol.CustomType.Value("CUSTOM_TYPE_01")
-    )
+    CustomType01 = _CustomObjectType("CustomType01", protocol.CustomType.Value("CUSTOM_TYPE_01"))
 
     #:
-    CustomType02 = _CustomObjectType(
-        "CustomType02", protocol.CustomType.Value("CUSTOM_TYPE_02")
-    )
+    CustomType02 = _CustomObjectType("CustomType02", protocol.CustomType.Value("CUSTOM_TYPE_02"))
 
     #:
-    CustomType03 = _CustomObjectType(
-        "CustomType03", protocol.CustomType.Value("CUSTOM_TYPE_03")
-    )
+    CustomType03 = _CustomObjectType("CustomType03", protocol.CustomType.Value("CUSTOM_TYPE_03"))
 
     #:
-    CustomType04 = _CustomObjectType(
-        "CustomType04", protocol.CustomType.Value("CUSTOM_TYPE_04")
-    )
+    CustomType04 = _CustomObjectType("CustomType04", protocol.CustomType.Value("CUSTOM_TYPE_04"))
 
     #:
-    CustomType05 = _CustomObjectType(
-        "CustomType05", protocol.CustomType.Value("CUSTOM_TYPE_05")
-    )
+    CustomType05 = _CustomObjectType("CustomType05", protocol.CustomType.Value("CUSTOM_TYPE_05"))
 
     #:
-    CustomType06 = _CustomObjectType(
-        "CustomType06", protocol.CustomType.Value("CUSTOM_TYPE_06")
-    )
+    CustomType06 = _CustomObjectType("CustomType06", protocol.CustomType.Value("CUSTOM_TYPE_06"))
 
     #:
-    CustomType07 = _CustomObjectType(
-        "CustomType07", protocol.CustomType.Value("CUSTOM_TYPE_07")
-    )
+    CustomType07 = _CustomObjectType("CustomType07", protocol.CustomType.Value("CUSTOM_TYPE_07"))
 
     #:
-    CustomType08 = _CustomObjectType(
-        "CustomType08", protocol.CustomType.Value("CUSTOM_TYPE_08")
-    )
+    CustomType08 = _CustomObjectType("CustomType08", protocol.CustomType.Value("CUSTOM_TYPE_08"))
 
     #:
-    CustomType09 = _CustomObjectType(
-        "CustomType09", protocol.CustomType.Value("CUSTOM_TYPE_09")
-    )
+    CustomType09 = _CustomObjectType("CustomType09", protocol.CustomType.Value("CUSTOM_TYPE_09"))
 
     #:
-    CustomType10 = _CustomObjectType(
-        "CustomType10", protocol.CustomType.Value("CUSTOM_TYPE_10")
-    )
+    CustomType10 = _CustomObjectType("CustomType10", protocol.CustomType.Value("CUSTOM_TYPE_10"))
 
     #:
-    CustomType11 = _CustomObjectType(
-        "CustomType11", protocol.CustomType.Value("CUSTOM_TYPE_11")
-    )
+    CustomType11 = _CustomObjectType("CustomType11", protocol.CustomType.Value("CUSTOM_TYPE_11"))
 
     #:
-    CustomType12 = _CustomObjectType(
-        "CustomType12", protocol.CustomType.Value("CUSTOM_TYPE_12")
-    )
+    CustomType12 = _CustomObjectType("CustomType12", protocol.CustomType.Value("CUSTOM_TYPE_12"))
 
     #:
-    CustomType13 = _CustomObjectType(
-        "CustomType13", protocol.CustomType.Value("CUSTOM_TYPE_13")
-    )
+    CustomType13 = _CustomObjectType("CustomType13", protocol.CustomType.Value("CUSTOM_TYPE_13"))
 
     #:
-    CustomType14 = _CustomObjectType(
-        "CustomType14", protocol.CustomType.Value("CUSTOM_TYPE_14")
-    )
+    CustomType14 = _CustomObjectType("CustomType14", protocol.CustomType.Value("CUSTOM_TYPE_14"))
 
     #:
-    CustomType15 = _CustomObjectType(
-        "CustomType15", protocol.CustomType.Value("CUSTOM_TYPE_15")
-    )
+    CustomType15 = _CustomObjectType("CustomType15", protocol.CustomType.Value("CUSTOM_TYPE_15"))
 
     #:
-    CustomType16 = _CustomObjectType(
-        "CustomType16", protocol.CustomType.Value("CUSTOM_TYPE_16")
-    )
+    CustomType16 = _CustomObjectType("CustomType16", protocol.CustomType.Value("CUSTOM_TYPE_16"))
 
     #:
-    CustomType17 = _CustomObjectType(
-        "CustomType17", protocol.CustomType.Value("CUSTOM_TYPE_17")
-    )
+    CustomType17 = _CustomObjectType("CustomType17", protocol.CustomType.Value("CUSTOM_TYPE_17"))
 
     #:
-    CustomType18 = _CustomObjectType(
-        "CustomType18", protocol.CustomType.Value("CUSTOM_TYPE_18")
-    )
+    CustomType18 = _CustomObjectType("CustomType18", protocol.CustomType.Value("CUSTOM_TYPE_18"))
 
     #: CustomType19 - the last custom object type
-    CustomType19 = _CustomObjectType(
-        "CustomType19", protocol.CustomType.Value("CUSTOM_TYPE_19")
-    )
+    CustomType19 = _CustomObjectType("CustomType19", protocol.CustomType.Value("CUSTOM_TYPE_19"))
 
 
-class _CustomObjectMarker(collections.namedtuple("_CustomObjectMarker", "name id")):
+class _CustomObjectMarker(collections.namedtuple('_CustomObjectMarker', 'name id')):
     # Tuple mapping between Proto CustomObjectMarker name and ID
     # All instances will be members of CustomObjectMarker
 
@@ -1729,10 +1554,10 @@ class _CustomObjectMarker(collections.namedtuple("_CustomObjectMarker", "name id
     __slots__ = ()
 
     def __str__(self):
-        return "CustomObjectMarkers.%s" % self.name
+        return 'CustomObjectMarkers.%s' % self.name
 
 
-class CustomObjectMarkers:  # pylint: disable=too-few-public-methods
+class CustomObjectMarkers():  # pylint: disable=too-few-public-methods
     """Defines all available custom object markers.
 
     For use with world.define_custom methods such as
@@ -1755,84 +1580,52 @@ class CustomObjectMarkers:  # pylint: disable=too-few-public-methods
     """
 
     #: .. image:: ../images/custom_markers/SDK_2Circles.png
-    Circles2 = _CustomObjectMarker(
-        "Circles2", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_CIRCLES_2")
-    )
+    Circles2 = _CustomObjectMarker("Circles2", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_CIRCLES_2"))
 
     #: .. image:: ../images/custom_markers/SDK_3Circles.png
-    Circles3 = _CustomObjectMarker(
-        "Circles3", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_CIRCLES_3")
-    )
+    Circles3 = _CustomObjectMarker("Circles3", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_CIRCLES_3"))
 
     #: .. image:: ../images/custom_markers/SDK_4Circles.png
-    Circles4 = _CustomObjectMarker(
-        "Circles4", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_CIRCLES_4")
-    )
+    Circles4 = _CustomObjectMarker("Circles4", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_CIRCLES_4"))
 
     #: .. image:: ../images/custom_markers/SDK_5Circles.png
-    Circles5 = _CustomObjectMarker(
-        "Circles5", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_CIRCLES_5")
-    )
+    Circles5 = _CustomObjectMarker("Circles5", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_CIRCLES_5"))
 
     #: .. image:: ../images/custom_markers/SDK_2Diamonds.png
-    Diamonds2 = _CustomObjectMarker(
-        "Diamonds2", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_DIAMONDS_2")
-    )
+    Diamonds2 = _CustomObjectMarker("Diamonds2", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_DIAMONDS_2"))
 
     #: .. image:: ../images/custom_markers/SDK_3Diamonds.png
-    Diamonds3 = _CustomObjectMarker(
-        "Diamonds3", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_DIAMONDS_3")
-    )
+    Diamonds3 = _CustomObjectMarker("Diamonds3", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_DIAMONDS_3"))
 
     #: .. image:: ../images/custom_markers/SDK_4Diamonds.png
-    Diamonds4 = _CustomObjectMarker(
-        "Diamonds4", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_DIAMONDS_4")
-    )
+    Diamonds4 = _CustomObjectMarker("Diamonds4", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_DIAMONDS_4"))
 
     #: .. image:: ../images/custom_markers/SDK_5Diamonds.png
-    Diamonds5 = _CustomObjectMarker(
-        "Diamonds5", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_DIAMONDS_5")
-    )
+    Diamonds5 = _CustomObjectMarker("Diamonds5", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_DIAMONDS_5"))
 
     #: .. image:: ../images/custom_markers/SDK_2Hexagons.png
-    Hexagons2 = _CustomObjectMarker(
-        "Hexagons2", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_HEXAGONS_2")
-    )
+    Hexagons2 = _CustomObjectMarker("Hexagons2", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_HEXAGONS_2"))
 
     #: .. image:: ../images/custom_markers/SDK_3Hexagons.png
-    Hexagons3 = _CustomObjectMarker(
-        "Hexagons3", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_HEXAGONS_3")
-    )
+    Hexagons3 = _CustomObjectMarker("Hexagons3", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_HEXAGONS_3"))
 
     #: .. image:: ../images/custom_markers/SDK_4Hexagons.png
-    Hexagons4 = _CustomObjectMarker(
-        "Hexagons4", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_HEXAGONS_4")
-    )
+    Hexagons4 = _CustomObjectMarker("Hexagons4", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_HEXAGONS_4"))
 
     #: .. image:: ../images/custom_markers/SDK_5Hexagons.png
-    Hexagons5 = _CustomObjectMarker(
-        "Hexagons5", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_HEXAGONS_5")
-    )
+    Hexagons5 = _CustomObjectMarker("Hexagons5", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_HEXAGONS_5"))
 
     #: .. image:: ../images/custom_markers/SDK_2Triangles.png
-    Triangles2 = _CustomObjectMarker(
-        "Triangles2", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_TRIANGLES_2")
-    )
+    Triangles2 = _CustomObjectMarker("Triangles2", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_TRIANGLES_2"))
 
     #: .. image:: ../images/custom_markers/SDK_3Triangles.png
-    Triangles3 = _CustomObjectMarker(
-        "Triangles3", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_TRIANGLES_3")
-    )
+    Triangles3 = _CustomObjectMarker("Triangles3", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_TRIANGLES_3"))
 
     #: .. image:: ../images/custom_markers/SDK_4Triangles.png
-    Triangles4 = _CustomObjectMarker(
-        "Triangles4", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_TRIANGLES_4")
-    )
+    Triangles4 = _CustomObjectMarker("Triangles4", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_TRIANGLES_4"))
 
     #: .. image:: ../images/custom_markers/SDK_5Triangles.png
-    Triangles5 = _CustomObjectMarker(
-        "Triangles5", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_TRIANGLES_5")
-    )
+    Triangles5 = _CustomObjectMarker("Triangles5", protocol.CustomObjectMarker.Value("CUSTOM_MARKER_TRIANGLES_5"))
 
 
 class FixedCustomObject(util.Component):
@@ -1856,16 +1649,13 @@ class FixedCustomObject(util.Component):
                                                    10, 100, 100, relative_to_robot=True)
     """
 
-    def __init__(
-        self,
-        robot,
-        pose: util.Pose,
-        x_size_mm: float,
-        y_size_mm: float,
-        z_size_mm: float,
-        object_id: int,
-        **kw,
-    ):
+    def __init__(self,
+                 robot,
+                 pose: util.Pose,
+                 x_size_mm: float,
+                 y_size_mm: float,
+                 z_size_mm: float,
+                 object_id: int, **kw):
         super().__init__(robot, **kw)
         self._pose = pose
         self._x_size_mm = x_size_mm
@@ -1874,17 +1664,9 @@ class FixedCustomObject(util.Component):
         self._object_id = object_id
 
     def __repr__(self):
-        return (
-            "<%s pose=%s object_id=%d x_size_mm=%.1f y_size_mm=%.1f z_size_mm=%.1f=>"
-            % (
-                self.__class__.__name__,
-                self.pose,
-                self.object_id,
-                self.x_size_mm,
-                self.y_size_mm,
-                self.z_size_mm,
-            )
-        )
+        return ('<%s pose=%s object_id=%d x_size_mm=%.1f y_size_mm=%.1f z_size_mm=%.1f=>' %
+                (self.__class__.__name__, self.pose, self.object_id,
+                 self.x_size_mm, self.y_size_mm, self.z_size_mm))
 
     #### Public Methods ####
 
@@ -1914,16 +1696,8 @@ class FixedCustomObject(util.Component):
     @object_id.setter
     def object_id(self, value: int):
         if self._object_id is not None:
-            raise ValueError(
-                "Cannot change object ID once set (from %s to %s)"
-                % (self._object_id, value)
-            )
-        self.logger.debug(
-            "Updated object_id for %s from %s to %s",
-            self.__class__,
-            self._object_id,
-            value,
-        )
+            raise ValueError("Cannot change object ID once set (from %s to %s)" % (self._object_id, value))
+        self.logger.debug("Updated object_id for %s from %s to %s", self.__class__, self._object_id, value)
         self._object_id = value
 
     @property

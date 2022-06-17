@@ -1,4 +1,4 @@
-py  # Copyright (c) 2018 Anki, Inc.
+# Copyright (c) 2018 Anki, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ Warning:
     This package requires Python to have the PyOpenGL package installed, along
     with an implementation of GLUT (OpenGL Utility Toolkit).
 
-    To install the Python packages on Mac and Linux do ``python3 -m pip install --user "cyb3r_vector_sdk[3dviewer]"``
+    To install the Python packages on Mac and Linux do ``python3 -m pip install --user "anki_vector[3dviewer]"``
 
-    To install the Python packages on Windows do ``py -3 -m pip install --user "cyb3r_vector_sdk[3dviewer]"``
+    To install the Python packages on Windows do ``py -3 -m pip install --user "anki_vector[3dviewer]"``
 
     On Windows and Linux you must also install freeglut (macOS / OSX has one
     preinstalled).
@@ -34,74 +34,24 @@ Warning:
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = [
-    "CubeRenderFrame",
-    "FaceRenderFrame",
-    "LightCubeView",
-    "RobotRenderFrame",
-    "RobotView",
-    "UnitCubeView",
-    "VectorViewManifest",
-    "WorldRenderFrame",
-]
+__all__ = ['CubeRenderFrame', 'FaceRenderFrame', 'LightCubeView', 'RobotRenderFrame', 'RobotView',
+           'UnitCubeView', 'VectorViewManifest', 'WorldRenderFrame']
 
 import math
 import time
 from typing import List
 
-from anki_vector import nav_map, util
 from anki_vector.faces import Face
-from anki_vector.objects import (
-    CustomObject,
-    FixedCustomObject,
-    LightCube,
-    ObservableObject,
-)
-
+from anki_vector.objects import CustomObject, FixedCustomObject, LightCube, ObservableObject
+from anki_vector import nav_map, util
 from . import opengl
 
 try:
-    from OpenGL.GL import (
-        GL_AMBIENT,
-        GL_BLEND,
-        GL_COMPILE,
-        GL_DIFFUSE,
-        GL_FILL,
-        GL_FRONT,
-        GL_FRONT_AND_BACK,
-        GL_LIGHTING,
-        GL_LINE,
-        GL_LINE_STRIP,
-        GL_ONE_MINUS_SRC_ALPHA,
-        GL_POLYGON,
-        GL_SHININESS,
-        GL_SPECULAR,
-        GL_SRC_ALPHA,
-        GL_TRIANGLE_STRIP,
-        glBegin,
-        glBlendFunc,
-        glCallList,
-        glColor,
-        glColor3f,
-        glColor4f,
-        glDisable,
-        glEnable,
-        glEnd,
-        glEndList,
-        glGenLists,
-        glMaterialfv,
-        glMultMatrixf,
-        glNewList,
-        glNormal3fv,
-        glPolygonMode,
-        glPopMatrix,
-        glPushMatrix,
-        glRotatef,
-        glScalef,
-        glTranslatef,
-        glVertex3f,
-        glVertex3fv,
-    )
+    from OpenGL.GL import (GL_AMBIENT, GL_BLEND, GL_COMPILE, GL_DIFFUSE, GL_FILL, GL_FRONT, GL_FRONT_AND_BACK, GL_LIGHTING, GL_LINE, GL_LINE_STRIP,
+                           GL_ONE_MINUS_SRC_ALPHA, GL_POLYGON, GL_SHININESS, GL_SPECULAR, GL_SRC_ALPHA, GL_TRIANGLE_STRIP,
+                           glBegin, glBlendFunc, glCallList, glColor, glColor3f, glColor4f, glDisable, glEnable, glEnd, glEndList, glGenLists,
+                           glMaterialfv, glMultMatrixf, glNewList, glNormal3fv, glPolygonMode, glPopMatrix, glPushMatrix, glRotatef, glScalef,
+                           glTranslatef, glVertex3f, glVertex3fv)
 
 except ImportError as import_exc:
     opengl.raise_opengl_or_pillow_import_error(import_exc)
@@ -143,9 +93,7 @@ HEAD_PIVOT_X = -1.1
 HEAD_PIVOT_Z = 4.75
 
 
-_resource_package = (
-    __name__  # All resources are in subdirectories from this file's location
-)
+_resource_package = __name__  # All resources are in subdirectories from this file's location
 
 
 class UnitCubeView(opengl.PrecomputedView):
@@ -153,21 +101,22 @@ class UnitCubeView(opengl.PrecomputedView):
 
     def __init__(self):
 
-        self._display_list_name = "cube"
+        self._display_list_name = 'cube'
 
         super(UnitCubeView, self).__init__()
         self.build_from_render_function(self._display_list_name, self._render_cube)
 
     @staticmethod
     def _render_cube():
-        """Pre renders a unit-size cube, with normals, centered at the origin."""
+        """Pre renders a unit-size cube, with normals, centered at the origin.
+        """
         # build each of the 6 faces
         for face_index in range(6):
             # calculate normal and vertices for this face
             vertex_normal = [0.0, 0.0, 0.0]
             vertex_pos_options1 = [-1.0, 1.0, 1.0, -1.0]
             vertex_pos_options2 = [1.0, 1.0, -1.0, -1.0]
-            face_index_even = (face_index % 2) == 0
+            face_index_even = ((face_index % 2) == 0)
             # odd and even faces point in opposite directions
             normal_dir = 1.0 if face_index_even else -1.0
             if face_index < 2:
@@ -267,7 +216,8 @@ class RobotView(opengl.PrecomputedView):
         self.build_from_mesh_data(mesh_data)
 
     def _display_vector_body(self):
-        """Displays the robot's body to the current OpenGL context"""
+        """Displays the robot's body to the current OpenGL context
+        """
 
         # Render the static body meshes - first the main body:
         self.display_by_key("body_geo")
@@ -353,9 +303,7 @@ class RobotView(opengl.PrecomputedView):
         self.display_by_key("front_Screen_geo")
         glPopMatrix()
 
-    def display(
-        self, pose: util.Pose, head_angle: util.Angle, lift_position: util.Distance
-    ):
+    def display(self, pose: util.Pose, head_angle: util.Angle, lift_position: util.Distance):
         """Displays the precomputed view at a specific pose in 3d space.
 
         :param pose: Where to display the robot.
@@ -369,9 +317,7 @@ class RobotView(opengl.PrecomputedView):
         # Get the angle of Vector's lift for rendering - we subtract the angle
         # of the lift in the default pose in the object, and apply the inverse
         # rotation
-        sin_angle = (
-            lift_position.distance_mm - LIFT_PIVOT_HEIGHT_MM
-        ) / LIFT_ARM_LENGTH_MM
+        sin_angle = (lift_position.distance_mm - LIFT_PIVOT_HEIGHT_MM) / LIFT_ARM_LENGTH_MM
         angle_radians = math.asin(sin_angle)
 
         lift_angle = -(angle_radians - LIFT_ANGLE_IN_DEFAULT_POSE)
@@ -411,10 +357,8 @@ class NavMapView(opengl.PrecomputedView):
         cen = new_nav_map.center
         half_size = new_nav_map.size * 0.5
 
-        self._display_lists["_navmap"] = glGenLists(
-            1
-        )  # pylint: disable=assignment-from-no-return
-        glNewList(self._display_lists["_navmap"], GL_COMPILE)
+        self._display_lists['_navmap'] = glGenLists(1)  # pylint: disable=assignment-from-no-return
+        glNewList(self._display_lists['_navmap'], GL_COMPILE)
 
         glPushMatrix()
 
@@ -425,23 +369,23 @@ class NavMapView(opengl.PrecomputedView):
         glVertex3f(cen.x + half_size, cen.y - half_size, cen.z)  # TR
         glVertex3f(cen.x - half_size, cen.y - half_size, cen.z)  # BR
         glVertex3f(cen.x - half_size, cen.y + half_size, cen.z)  # BL
-        glVertex3f(cen.x + half_size, cen.y + half_size, cen.z)  # TL (close loop)
+        glVertex3f(cen.x + half_size, cen.y + half_size,
+                   cen.z)  # TL (close loop)
         glEnd()
 
         def color_for_content(content):
             nct = nav_map.NavNodeContentTypes
-            colors = {
-                nct.Unknown.value: (0.3, 0.3, 0.3),  # dark gray
-                nct.ClearOfObstacle.value: (0.0, 1.0, 0.0),  # green
-                nct.ClearOfCliff.value: (0.0, 0.5, 0.0),  # dark green
-                nct.ObstacleCube.value: (1.0, 0.0, 0.0),  # red
-                nct.ObstacleProximity.value: (1.0, 0.5, 0.0),  # orange
-                nct.ObstacleProximityExplored.value: (0.5, 1.0, 0.0),  # yellow-green
-                nct.ObstacleUnrecognized.value: (0.5, 0.0, 0.0),  # dark red
-                nct.Cliff.value: (0.0, 0.0, 0.0),  # black
-                nct.InterestingEdge.value: (1.0, 1.0, 0.0),  # yellow
-                nct.NonInterestingEdge.value: (0.5, 0.5, 0.0),  # dark-yellow
-            }
+            colors = {nct.Unknown.value: (0.3, 0.3, 0.3),                      # dark gray
+                      nct.ClearOfObstacle.value: (0.0, 1.0, 0.0),              # green
+                      nct.ClearOfCliff.value: (0.0, 0.5, 0.0),                 # dark green
+                      nct.ObstacleCube.value: (1.0, 0.0, 0.0),                 # red
+                      nct.ObstacleProximity.value: (1.0, 0.5, 0.0),            # orange
+                      nct.ObstacleProximityExplored.value: (0.5, 1.0, 0.0),    # yellow-green
+                      nct.ObstacleUnrecognized.value: (0.5, 0.0, 0.0),         # dark red
+                      nct.Cliff.value: (0.0, 0.0, 0.0),                        # black
+                      nct.InterestingEdge.value: (1.0, 1.0, 0.0),              # yellow
+                      nct.NonInterestingEdge.value: (0.5, 0.5, 0.0),           # dark-yellow
+                      }
 
             col = colors.get(content)
             if col is None:
@@ -488,16 +432,17 @@ class NavMapView(opengl.PrecomputedView):
         """Displays the precomputed nav map view.
         This function will do nothing if no display list has yet been built.
         """
-        if "_navmap" in self._display_lists:
+        if '_navmap' in self._display_lists:
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             glEnable(GL_BLEND)
             glPushMatrix()
-            glCallList(self._display_lists["_navmap"])
+            glCallList(self._display_lists['_navmap'])
             glPopMatrix()
 
 
-class VectorViewManifest:
-    """A collection of Vector-specific source data containing views to display."""
+class VectorViewManifest():
+    """A collection of Vector-specific source data containing views to display.
+    """
 
     def __init__(self):
         self._light_cube_view: LightCubeView = None
@@ -549,7 +494,7 @@ class VectorViewManifest:
         self._nav_map_view = NavMapView()
 
 
-class ObservableObjectRenderFrame:  # pylint: disable=too-few-public-methods
+class ObservableObjectRenderFrame():  # pylint: disable=too-few-public-methods
     """Minimal copy of an object's state for 1 frame of rendering.
 
     :param obj: the cube object to be rendered.
@@ -569,9 +514,7 @@ class ObservableObjectRenderFrame:  # pylint: disable=too-few-public-methods
         return time.time() - self.last_observed_time
 
 
-class CubeRenderFrame(
-    ObservableObjectRenderFrame
-):  # pylint: disable=too-few-public-methods
+class CubeRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-public-methods
     """Minimal copy of a Cube's state for 1 frame of rendering.
 
     :param cube: the cube object to be rendered.
@@ -581,9 +524,7 @@ class CubeRenderFrame(
         super().__init__(cube)
 
 
-class FaceRenderFrame(
-    ObservableObjectRenderFrame
-):  # pylint: disable=too-few-public-methods
+class FaceRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-public-methods
     """Minimal copy of a Face's state for 1 frame of rendering.
 
     :param face: The face object to be rendered.
@@ -593,9 +534,7 @@ class FaceRenderFrame(
         super().__init__(face)
 
 
-class CustomObjectRenderFrame(
-    ObservableObjectRenderFrame
-):  # pylint: disable=too-few-public-methods
+class CustomObjectRenderFrame(ObservableObjectRenderFrame):  # pylint: disable=too-few-public-methods
     """Minimal copy of a CustomObject's state for 1 frame of rendering.
 
     :param custom_object: The custom object to be rendered.  Either :class:`anki_vector.objects.CustomObject` or :class:`anki_vector.objects.FixedCustomObject`.
@@ -623,7 +562,7 @@ class CustomObjectRenderFrame(
             self.z_size_mm = custom_object.archetype.z_size_mm
 
 
-class RobotRenderFrame:  # pylint: disable=too-few-public-methods
+class RobotRenderFrame():  # pylint: disable=too-few-public-methods
     """Minimal copy of a Robot's state for 1 frame of rendering.
 
     :param robot: the robot object to be rendered.
@@ -641,7 +580,7 @@ class RobotRenderFrame:  # pylint: disable=too-few-public-methods
             self.lift_position = util.distance_mm(robot.lift_height_mm)
 
 
-class WorldRenderFrame:  # pylint: disable=too-few-public-methods
+class WorldRenderFrame():  # pylint: disable=too-few-public-methods
     """Minimal copy of the World's state for 1 frame of rendering.
 
     :param robot: the robot object to be rendered, which also has handles to the other objects
@@ -673,9 +612,9 @@ class WorldRenderFrame:  # pylint: disable=too-few-public-methods
                 self.custom_object_frames.append(CustomObjectRenderFrame(obj, is_fixed))
 
     def cube_connected(self):
-        """Is there a light cube connected to Vector"""
+        '''Is there a light cube connected to Vector'''
         return self.connected_cube
 
     def cube_connecting(self):
-        """Is there a current attempt to connect to a light cube"""
+        '''Is there a current attempt to connect to a light cube'''
         return self.connecting_to_cube

@@ -29,9 +29,7 @@ from anki_vector import behavior, util
 def hold_control():
     args = util.parse_command_args()
     with behavior.ReserveBehaviorControl(args.serial):
-        input(
-            "Vector behavior control reserved for SDK.  Hit 'Enter' to release control."
-        )
+        input("Vector behavior control reserved for SDK.  Hit 'Enter' to release control.")
 
 
 if __name__ == "__main__":

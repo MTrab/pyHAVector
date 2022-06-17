@@ -25,23 +25,18 @@ The camera resolution is 1280 x 720 with a field of view of 90 deg (H) x 50 deg 
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = [
-    "EvtNewRawCameraImage",
-    "EvtNewCameraImage",
-    "CameraComponent",
-    "CameraConfig",
-    "CameraImage",
-]
+__all__ = ["EvtNewRawCameraImage", "EvtNewCameraImage",
+           "CameraComponent", "CameraImage"]
 
 import asyncio
-import io
-import sys
-import time
 from concurrent.futures import CancelledError
+import io
+import time
+import sys
 
 from . import annotate, connection, util
 from .events import Events
-from .exceptions import VectorCameraFeedException, VectorCameraImageCaptureException
+from .exceptions import VectorCameraFeedException
 from .messaging import protocol
 
 try:
@@ -88,12 +83,7 @@ class CameraImage:
     :param image_id: An image number that increments on every new image received.
     """
 
-    def __init__(
-        self,
-        raw_image: Image.Image,
-        image_annotator: annotate.ImageAnnotator,
-        image_id: int,
-    ):
+    def __init__(self, raw_image: Image.Image, image_annotator: annotate.ImageAnnotator, image_id: int):
 
         self._raw_image = raw_image
         self._image_annotator = image_annotator
@@ -115,12 +105,7 @@ class CameraImage:
         """The time the image was received and processed by the SDK."""
         return self._image_recv_time
 
-    def annotate_image(
-        self,
-        scale: float = None,
-        fit_size: tuple = None,
-        resample_mode: int = annotate.RESAMPLE_MODE_NEAREST,
-    ) -> Image.Image:
+    def annotate_image(self, scale: float = None, fit_size: tuple = None, resample_mode: int = annotate.RESAMPLE_MODE_NEAREST) -> Image.Image:
         """Adds any enabled annotations to the image.
         Optionally resizes the image prior to annotations being applied.  The
         aspect ratio of the resulting image always matches that of the raw image.
@@ -144,127 +129,10 @@ class CameraImage:
             (fast) or :attr:`~anki_vector.annotate.RESAMPLE_MODE_BILINEAR` (slower,
             but smoother).
         """
-        if self._raw_image.size != (640, 360):
-            raise VectorCameraImageCaptureException(
-                "Annotation is only supported for default resolution images."
-            )
-        return self._image_annotator.annotate_image(
-            self._raw_image, scale=scale, fit_size=fit_size, resample_mode=resample_mode
-        )
-
-
-class CameraConfig:
-    """The fixed properties for Vector's camera.
-
-    A full 3x3 calibration matrix for doing 3D reasoning based on the camera
-    images would look like:
-
-        +--------------+--------------+---------------+
-        |focal_length.x|      0       |    center.x   |
-        +--------------+--------------+---------------+
-        |       0      |focal_length.y|    center.y   |
-        +--------------+--------------+---------------+
-        |       0      |       0      |        1      |
-        +--------------+--------------+---------------+
-
-    .. testcode::
-
-        import anki_vector
-
-        with anki_vector.Robot() as robot:
-            min = robot.camera.config.min_gain
-            max = robot.camera.config.max_gain
-            print(f"Robot camera allowable exposure gain range is from {min} to {max}")
-    """
-
-    def __init__(
-        self,
-        focal_length_x: float,
-        focal_length_y: float,
-        center_x: float,
-        center_y: float,
-        fov_x: float,
-        fov_y: float,
-        min_exposure_time_ms: int,
-        max_exposure_time_ms: int,
-        min_gain: float,
-        max_gain: float,
-    ):
-        self._focal_length = util.Vector2(focal_length_x, focal_length_y)
-        self._center = util.Vector2(center_x, center_y)
-        self._fov_x = util.degrees(fov_x)
-        self._fov_y = util.degrees(fov_y)
-        self._min_exposure_ms = min_exposure_time_ms
-        self._max_exposure_ms = max_exposure_time_ms
-        self._min_gain = min_gain
-        self._max_gain = max_gain
-
-    @classmethod
-    def create_from_message(cls, msg: protocol.CameraConfigResponse):
-        """Create camera configuration based on Vector's camera configuration from the message sent from the Robot"""
-        return cls(
-            msg.focal_length_x,
-            msg.focal_length_y,
-            msg.center_x,
-            msg.center_y,
-            msg.fov_x,
-            msg.fov_y,
-            msg.min_camera_exposure_time_ms,
-            msg.max_camera_exposure_time_ms,
-            msg.min_camera_gain,
-            msg.max_camera_gain,
-        )
-
-    @property
-    def min_gain(self) -> float:
-        """The minimum supported camera gain."""
-        return self._min_gain
-
-    @property
-    def max_gain(self) -> float:
-        """The maximum supported camera gain."""
-        return self._max_gain
-
-    @property
-    def min_exposure_time_ms(self) -> int:
-        """The minimum supported exposure time in milliseconds."""
-        return self._min_exposure_ms
-
-    @property
-    def max_exposure_time_ms(self) -> int:
-        """The maximum supported exposure time in milliseconds."""
-        return self._max_exposure_ms
-
-    @property
-    def focal_length(self):
-        """:class:`anki_vector.util.Vector2`: The focal length of the camera.
-
-        This is focal length combined with pixel skew (as the pixels aren't
-        perfectly square), so there are subtly different values for x and y.
-        It is in floating point pixel values e.g. <288.87, 288.36>.
-        """
-        return self._focal_length
-
-    @property
-    def center(self):
-        """:class:`anki_vector.util.Vector2`: The focal center of the camera.
-
-        This is the position of the optical center of projection within the
-        image. It will be close to the center of the image, but adjusted based
-        on the calibration of the lens. It is in floating point pixel values
-        e.g. <155.11, 111.40>.
-        """
-        return self._center
-
-    @property
-    def fov_x(self):
-        """:class:`anki_vector.util.Angle`: The x (horizontal) field of view."""
-        return self._fov_x
-
-    @property
-    def fov_y(self):
-        """:class:`anki_vector.util.Angle`: The y (vertical) field of view."""
-        return self._fov_y
+        return self._image_annotator.annotate_image(self._raw_image,
+                                                    scale=scale,
+                                                    fit_size=fit_size,
+                                                    resample_mode=resample_mode)
 
 
 class CameraComponent(util.Component):
@@ -294,68 +162,11 @@ class CameraComponent(util.Component):
     def __init__(self, robot):
         super().__init__(robot)
 
-        self._image_annotator: annotate.ImageAnnotator = self.annotator_factory(
-            self.robot.world
-        )
+        self._image_annotator: annotate.ImageAnnotator = self.annotator_factory(self.robot.world)
         self._latest_image: CameraImage = None
         self._latest_image_id: int = None
         self._camera_feed_task: asyncio.Task = None
         self._enabled = False
-        self._config = None  # type CameraConfig
-        self._gain = 0.0
-        self._exposure_ms = 0
-        self._auto_exposure_enabled = True
-
-    def set_config(self, message: protocol.CameraConfigRequest):
-        """Update Vector's camera configuration from the message sent from the Robot"""
-        try:
-            self._config = CameraConfig.create_from_message(message)
-        except:
-            self._config = CameraConfig(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
-    @connection.on_connection_thread(requires_control=False)
-    async def get_camera_config(self) -> protocol.CameraConfigResponse:
-        """Get Vector's camera configuration
-
-        Retrieves the calibrated camera settings.  This is called during the Robot connection initialization, SDK
-        users should use the `config` property in most instances.
-
-        :return:
-        """
-        try:
-            request = protocol.CameraConfigRequest()
-            return await self.conn.grpc_interface.GetCameraConfig(request)
-        except:
-            pass
-
-    @property
-    def config(self) -> CameraConfig:
-        """:class:`anki_vector.camera.CameraConfig`: The read-only config/calibration for the camera"""
-        return self._config
-
-    @property
-    def is_auto_exposure_enabled(self) -> bool:
-        """bool: True if auto exposure is currently enabled
-
-        If auto exposure is enabled the `gain` and `exposure_ms`
-        values will constantly be updated by Vector.
-        """
-        return self._auto_exposure_enabled
-
-    @property
-    def gain(self) -> float:
-        """float: The current camera gain setting."""
-        return self._gain
-
-    @property
-    def exposure_ms(self) -> int:
-        """int: The current camera exposure setting in milliseconds."""
-        return self._exposure_ms
-
-    def update_state(self, _robot, _event_type, msg):
-        self._gain = msg.gain
-        self._exposure_ms = msg.exposure_ms
-        self._auto_exposure_enabled = msg.auto_exposure_enabled
 
     @property
     @util.block_while_none()
@@ -434,9 +245,7 @@ class CameraComponent(util.Component):
         """
         if not self._camera_feed_task or self._camera_feed_task.done():
             self._enabled = True
-            self._camera_feed_task = self.conn.loop.create_task(
-                self._request_and_handle_images()
-            )
+            self._camera_feed_task = self.conn.loop.create_task(self._request_and_handle_images())
 
     def close_camera_feed(self) -> None:
         """Cancel camera feed task."""
@@ -447,9 +256,7 @@ class CameraComponent(util.Component):
             try:
                 future.result()
             except CancelledError:
-                self.logger.debug(
-                    "Camera feed task was cancelled. This is expected during disconnection."
-                )
+                self.logger.debug('Camera feed task was cancelled. This is expected during disconnection.')
             # wait for streaming to end, up to 10 seconds
             iterations = 0
             max_iterations = 100
@@ -461,10 +268,8 @@ class CameraComponent(util.Component):
                     # because other SDK functions will still work and
                     # the RPC should have had enough time to finish
                     # which means we _should_ be in a good state.
-                    self.logger.info(
-                        "Camera Feed closed, but streaming on"
-                        " robot remained enabled.  This is unexpected."
-                    )
+                    self.logger.info('Camera Feed closed, but streaming on'
+                                     ' robot remained enabled.  This is unexpected.')
                     break
             self._camera_feed_task = None
 
@@ -500,16 +305,10 @@ class CameraComponent(util.Component):
         self._latest_image = CameraImage(image, self._image_annotator, msg.image_id)
         self._latest_image_id = msg.image_id
 
-        self.conn.run_soon(
-            self.robot.events.dispatch_event(
-                EvtNewRawCameraImage(image), Events.new_raw_camera_image
-            )
-        )
-        self.conn.run_soon(
-            self.robot.events.dispatch_event(
-                EvtNewCameraImage(self._latest_image), Events.new_camera_image
-            )
-        )
+        self.conn.run_soon(self.robot.events.dispatch_event(EvtNewRawCameraImage(image),
+                                                            Events.new_raw_camera_image))
+        self.conn.run_soon(self.robot.events.dispatch_event(EvtNewCameraImage(self._latest_image),
+                                                            Events.new_camera_image))
 
         if self._image_annotator.annotation_enabled:
             image = self._image_annotator.annotate_image(image)
@@ -524,20 +323,14 @@ class CameraComponent(util.Component):
                 # If the camera feed is disabled after stream is setup, exit the stream
                 # (the camera feed on the robot is disabled internally on stream exit)
                 if not self._enabled:
-                    self.logger.warning(
-                        "Camera feed has been disabled. Enable the feed to start/continue receiving camera feed data"
-                    )
+                    self.logger.warning('Camera feed has been disabled. Enable the feed to start/continue receiving camera feed data')
                     return
                 self._unpack_image(evt)
         except CancelledError:
-            self.logger.debug(
-                "Camera feed task was cancelled. This is expected during disconnection."
-            )
+            self.logger.debug('Camera feed task was cancelled. This is expected during disconnection.')
 
     @connection.on_connection_thread()
-    async def capture_single_image(
-        self, enable_high_resolution: bool = False
-    ) -> CameraImage:
+    async def capture_single_image(self) -> CameraImage:
         """Request to capture a single image from the robot's camera.
 
         This call requests the robot to capture an image and returns the
@@ -553,105 +346,16 @@ class CameraComponent(util.Component):
             with anki_vector.Robot() as robot:
                 image = robot.camera.capture_single_image()
                 image.raw_image.show()
-
-        :param enable_high_resolution: Enable/disable request for high resolution images. The default resolution
-                                       is 640x360, while the high resolution is 1280x720.
         """
         if self._enabled:
-            self.logger.warning(
-                "Camera feed is enabled. Receiving image from the feed at default resolution."
-            )
             return self._latest_image
-        if enable_high_resolution:
-            self.logger.warning(
-                "Capturing a high resolution (1280*720) image. Image events for this frame need to be scaled."
-            )
-        req = protocol.CaptureSingleImageRequest(
-            enable_high_resolution=enable_high_resolution
-        )
+        req = protocol.CaptureSingleImageRequest()
         res = await self.grpc_interface.CaptureSingleImage(req)
         if res and res.data:
             image = _convert_to_pillow_image(res.data)
             return CameraImage(image, self._image_annotator, res.image_id)
 
-        self.logger.error("Failed to capture a single image")
-
-    @connection.on_connection_thread()
-    async def enable_auto_exposure(
-        self, enable_auto_exposure=True
-    ) -> protocol.SetCameraSettingsResponse:
-        """Enable auto exposure on Vector's Camera.
-
-        Enable auto exposure on Vector's camera to constantly update the exposure
-        time and gain values based on the recent images. This is the default mode
-        when any SDK program starts.
-
-        .. testcode::
-
-            import time
-            import anki_vector
-            with anki_vector.Robot() as robot:
-                robot.camera.enable_auto_exposure(False)
-                time.sleep(5)
-
-        :param enable_auto_exposure: whether the camera should automatically adjust exposure
-        """
-
-        set_camera_settings_request = protocol.SetCameraSettingsRequest(
-            enable_auto_exposure=enable_auto_exposure
-        )
-        result = await self.conn.grpc_interface.SetCameraSettings(
-            set_camera_settings_request
-        )
-        self._auto_exposure_enabled = enable_auto_exposure
-        return result
-
-    @connection.on_connection_thread()
-    async def set_manual_exposure(
-        self, exposure_ms: int, gain: float
-    ) -> protocol.SetCameraSettingsResponse:
-        """Set manual exposure values for Vector's Camera.
-
-        This will disable auto exposure on Vector's camera and force the specified exposure
-        time and gain values.
-
-        .. testcode::
-
-            import time
-            import anki_vector
-            with anki_vector.Robot() as robot:
-                robot.camera.set_manual_exposure(1, 0.25)
-                time.sleep(5)
-
-        :param exposure_ms: The desired exposure time in milliseconds.
-                Must be within the robot's exposure range from :attr:`CameraConfig.min_exposure_time_ms` to
-                :attr:`CameraConfig.max_exposure_time_ms`
-        :param gain: The desired gain value.
-                Must be within the robot's gain range from :attr:`CameraConfig.min_gain` to
-                :attr:`CameraConfig.max_gain`
-        Raises:
-            :class:`ValueError` if supplied an out-of-range exposure or gain
-
-        """
-
-        if (
-            exposure_ms < self._config.min_exposure_time_ms
-            or exposure_ms > self._config.max_exposure_time_ms
-            or gain < self._config.min_gain
-            or gain > self._config.max_gain
-        ):
-            raise ValueError("Exposure settings out of range")
-
-        set_camera_settings_request = protocol.SetCameraSettingsRequest(
-            gain=gain, exposure_ms=exposure_ms, enable_auto_exposure=False
-        )
-        result = await self.conn.grpc_interface.SetCameraSettings(
-            set_camera_settings_request
-        )
-        self._gain = gain
-        self._exposure_ms = exposure_ms
-        self._auto_exposure_enabled = False
-        return result
+        self.logger.error('Failed to capture a single image')
 
 
 class EvtNewRawCameraImage:  # pylint: disable=too-few-public-methods
