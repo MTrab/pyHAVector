@@ -15,24 +15,12 @@
 """Helper routines for dealing with Vector's Cube lights and colors."""
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = [
-    "MAX_COLOR_PROFILE",
-    "WHITE_BALANCED_CUBE_PROFILE",
-    "blue_light",
-    "cyan_light",
-    "green_light",
-    "magenta_light",
-    "off_light",
-    "red_light",
-    "white_light",
-    "yellow_light",
-    "Color",
-    "ColorProfile",
-    "Light",
-    "package_request_params",
-]
+__all__ = ['MAX_COLOR_PROFILE', 'WHITE_BALANCED_CUBE_PROFILE',
+           'blue_light', 'cyan_light', 'green_light', 'magenta_light', 'off_light',
+           'red_light', 'white_light', 'yellow_light',
+           'Color', 'ColorProfile', 'Light', 'package_request_params']
 
-from .color import Color, blue, cyan, green, magenta, off, red, white, yellow
+from .color import Color, green, red, blue, cyan, magenta, yellow, white, off
 
 
 class ColorProfile:
@@ -44,9 +32,7 @@ class ColorProfile:
     :param blue_multiplier: Scaling value for the brightness of blue Lights
     """
 
-    def __init__(
-        self, red_multiplier: float, green_multiplier: float, blue_multiplier: float
-    ):
+    def __init__(self, red_multiplier: float, green_multiplier: float, blue_multiplier: float):
         self._red_multiplier = red_multiplier
         self._green_multiplier = green_multiplier
         self._blue_multiplier = blue_multiplier
@@ -54,16 +40,16 @@ class ColorProfile:
     # TODO Needs docs, param types, sample code
     def augment_color(self, original_color):
         rgb = [
-            (original_color.int_color >> 24) & 0xFF,
-            (original_color.int_color >> 16) & 0xFF,
-            (original_color.int_color >> 8) & 0xFF,
+            (original_color.int_color >> 24) & 0xff,
+            (original_color.int_color >> 16) & 0xff,
+            (original_color.int_color >> 8) & 0xff
         ]
 
         rgb[0] = int(self._red_multiplier * rgb[0])
         rgb[1] = int(self._green_multiplier * rgb[1])
         rgb[2] = int(self._blue_multiplier * rgb[2])
 
-        result_int_code = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xFF
+        result_int_code = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xff
         return Color(result_int_code)
 
     # TODO Needs example code, more descriptive docs
@@ -86,16 +72,16 @@ class ColorProfile:
 
 
 #: :class:`ColorProfile`:  Color profile to get the maximum possible brightness out of each LED.
-MAX_COLOR_PROFILE = ColorProfile(
-    red_multiplier=1.0, green_multiplier=1.0, blue_multiplier=1.0
-)
+MAX_COLOR_PROFILE = ColorProfile(red_multiplier=1.0,
+                                 green_multiplier=1.0,
+                                 blue_multiplier=1.0)
 
 #: :class:`ColorProfile`:  Color profile balanced so that a max color value more closely resembles pure white.
 # TODO: Balance this more carefully once robots with proper color pipe
 # hardware becomes available
-WHITE_BALANCED_CUBE_PROFILE = ColorProfile(
-    red_multiplier=1.0, green_multiplier=0.95, blue_multiplier=0.7
-)
+WHITE_BALANCED_CUBE_PROFILE = ColorProfile(red_multiplier=1.0,
+                                           green_multiplier=0.95,
+                                           blue_multiplier=0.7)
 
 
 class Light:
@@ -105,15 +91,13 @@ class Light:
     assigned to either state (including no color/light).
     """
 
-    def __init__(
-        self,
-        on_color: Color = off,
-        off_color: Color = off,
-        on_period_ms: int = 250,
-        off_period_ms: int = 0,
-        transition_on_period_ms: int = 0,
-        transition_off_period_ms: int = 0,
-    ):
+    def __init__(self,
+                 on_color: Color = off,
+                 off_color: Color = off,
+                 on_period_ms: int = 250,
+                 off_period_ms: int = 0,
+                 transition_on_period_ms: int = 0,
+                 transition_off_period_ms: int = 0):
         self._on_color = on_color
         self._off_color = off_color
         self._on_period_ms = on_period_ms

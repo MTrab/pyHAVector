@@ -17,47 +17,42 @@ Utility functions and classes for the Vector SDK.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = [
-    "Angle",
-    "BaseOverlay",
-    "Component",
-    "Distance",
-    "ImageRect",
-    "Matrix44",
-    "Pose",
-    "Position",
-    "Quaternion",
-    "RectangleOverlay",
-    "Speed",
-    "Vector2",
-    "Vector3",
-    "angle_z_to_quaternion",
-    "block_while_none",
-    "degrees",
-    "distance_mm",
-    "distance_inches",
-    "get_class_logger",
-    "parse_command_args",
-    "radians",
-    "setup_basic_logging",
-    "speed_mmps",
-]
+__all__ = ['Angle',
+           'BaseOverlay',
+           'Component',
+           'Distance',
+           'ImageRect',
+           'Matrix44',
+           'Pose',
+           'Position',
+           'Quaternion',
+           'RectangleOverlay',
+           'Speed',
+           'Vector2',
+           'Vector3',
+           'angle_z_to_quaternion',
+           'block_while_none',
+           'degrees',
+           'distance_mm',
+           'distance_inches',
+           'get_class_logger',
+           'parse_command_args',
+           'radians',
+           'setup_basic_logging',
+           'speed_mmps']
 
 import argparse
 import configparser
+from functools import wraps
 import logging
 import math
 import os
+from pathlib import Path
 import sys
 import time
-from functools import wraps
-from pathlib import Path
 from typing import Callable, Union
 
-from .exceptions import (
-    VectorConfigurationException,
-    VectorPropertyValueNotReadyException,
-)
+from .exceptions import VectorConfigurationException, VectorPropertyValueNotReadyException
 from .messaging import protocol
 
 try:
@@ -90,9 +85,7 @@ def parse_command_args(parser: argparse.ArgumentParser = None):
     """
     if parser is None:
         parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-s", "--serial", nargs="?", default=os.environ.get("ANKI_ROBOT_SERIAL", None)
-    )
+    parser.add_argument("-s", "--serial", nargs='?', default=os.environ.get('ANKI_ROBOT_SERIAL', None))
     return parser.parse_args()
 
 
@@ -105,7 +98,6 @@ def block_while_none(interval: float = 0.1, max_iterations: int = 50):
     This will raise a :class:`VectorControlTimeoutException` if the property cannot be retrieved
     before :attr:`max_iterations`.
     """
-
     def blocker(func: Callable):
         @wraps(func)
         def wrapped(*args, **kwargs):
@@ -118,17 +110,13 @@ def block_while_none(interval: float = 0.1, max_iterations: int = 50):
                     raise VectorPropertyValueNotReadyException()
                 result = func(*args, **kwargs)
             return result
-
         return wrapped
-
     return blocker
 
 
-def setup_basic_logging(
-    custom_handler: logging.Handler = None,
-    general_log_level: str = None,
-    target: object = None,
-):
+def setup_basic_logging(custom_handler: logging.Handler = None,
+                        general_log_level: str = None,
+                        target: object = None):
     """Helper to perform basic setup of the Python logger.
 
     :param custom_handler: provide an external logger for custom logging locations
@@ -138,28 +126,25 @@ def setup_basic_logging(
     :param target: The stream to send the log data to; defaults to stderr
     """
     if general_log_level is None:
-        general_log_level = os.environ.get("VECTOR_LOG_LEVEL", logging.INFO)
+        general_log_level = os.environ.get('VECTOR_LOG_LEVEL', logging.INFO)
 
     handler = custom_handler
     if handler is None:
         handler = logging.StreamHandler(stream=target)
-        formatter = logging.Formatter(
-            "%(asctime)s.%(msecs)03d %(name)+25s %(levelname)+7s  %(message)s",
-            "%H:%M:%S",
-        )
+        formatter = logging.Formatter("%(asctime)s.%(msecs)03d %(name)+25s %(levelname)+7s  %(message)s",
+                                      "%H:%M:%S")
         handler.setFormatter(formatter)
 
         class LogCleanup(logging.Filter):  # pylint: disable=too-few-public-methods
             def filter(self, record):
                 # Drop 'anki_vector' from log messages
-                record.name = ".".join(record.name.split(".")[1:])
+                record.name = '.'.join(record.name.split('.')[1:])
                 # Indent past informational chunk
                 record.msg = record.msg.replace("\n", f"\n{'':48}")
                 return True
-
         handler.addFilter(LogCleanup())
 
-    vector_logger = logging.getLogger("anki_vector")
+    vector_logger = logging.getLogger('anki_vector')
     if not vector_logger.handlers:
         vector_logger.addHandler(handler)
         vector_logger.setLevel(general_log_level)
@@ -187,7 +172,7 @@ class Vector2:
     :param y: Y component
     """
 
-    __slots__ = ("_x", "_y")
+    __slots__ = ('_x', '_y')
 
     def __init__(self, x: float, y: float):
         self._x = float(x)
@@ -249,7 +234,7 @@ class Vector3:
     :param z: Z component
     """
 
-    __slots__ = ("_x", "_y", "_z")
+    __slots__ = ('_x', '_y', '_z')
 
     def __init__(self, x: float, y: float, z: float):
         self._x = float(x)
@@ -313,8 +298,7 @@ class Vector3:
         return Vector3(
             self._y * other.z - self._z * other.y,
             self._z * other.x - self._x * other.z,
-            self._x * other.y - self._y * other.x,
-        )
+            self._x * other.y - self._y * other.x)
 
     @property
     def x_y_z(self):
@@ -357,17 +341,13 @@ class Angle:
         (cannot be combined with ``radians``)
     """
 
-    __slots__ = "_radians"
+    __slots__ = ('_radians')
 
-    def __init__(
-        self, radians: float = None, degrees: float = None
-    ):  # pylint: disable=redefined-outer-name
+    def __init__(self, radians: float = None, degrees: float = None):  # pylint: disable=redefined-outer-name
         if radians is None and degrees is None:
             raise ValueError("Expected either the degrees or radians keyword argument")
         if radians and degrees:
-            raise ValueError(
-                "Expected either the degrees or radians keyword argument, not both"
-            )
+            raise ValueError("Expected either the degrees or radians keyword argument, not both")
 
         if degrees is not None:
             radians = degrees * math.pi / 180
@@ -478,45 +458,16 @@ class Matrix44:
     combined with a position for a full translation matrix, as done by
     :meth:`Pose.to_matrix`.
     """
+    __slots__ = ('m00', 'm10', 'm20', 'm30',
+                 'm01', 'm11', 'm21', 'm31',
+                 'm02', 'm12', 'm22', 'm32',
+                 'm03', 'm13', 'm23', 'm33')
 
-    __slots__ = (
-        "m00",
-        "m10",
-        "m20",
-        "m30",
-        "m01",
-        "m11",
-        "m21",
-        "m31",
-        "m02",
-        "m12",
-        "m22",
-        "m32",
-        "m03",
-        "m13",
-        "m23",
-        "m33",
-    )
-
-    def __init__(
-        self,
-        m00: float,
-        m10: float,
-        m20: float,
-        m30: float,
-        m01: float,
-        m11: float,
-        m21: float,
-        m31: float,
-        m02: float,
-        m12: float,
-        m22: float,
-        m32: float,
-        m03: float,
-        m13: float,
-        m23: float,
-        m33: float,
-    ):
+    def __init__(self,
+                 m00: float, m10: float, m20: float, m30: float,
+                 m01: float, m11: float, m21: float, m31: float,
+                 m02: float, m12: float, m22: float, m32: float,
+                 m03: float, m13: float, m23: float, m33: float):
         self.m00 = float(m00)
         self.m10 = float(m10)
         self.m20 = float(m20)
@@ -538,66 +489,34 @@ class Matrix44:
         self.m33 = float(m33)
 
     def __repr__(self):
-        return (
-            "<%s: "
-            "%.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f "
-            "%.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f>"
-            % (self.__class__.__name__, *self.in_row_order)
-        )
+        return ("<%s: "
+                "%.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f "
+                "%.1f %.1f %.1f %.1f %.1f %.1f %.1f %.1f>" % (
+                    self.__class__.__name__, *self.in_row_order))
 
     @property
     def tabulated_string(self) -> str:
         """A multi-line string formatted with tabs to show the matrix contents."""
-        return (
-            "%.1f\t%.1f\t%.1f\t%.1f\n"
-            "%.1f\t%.1f\t%.1f\t%.1f\n"
-            "%.1f\t%.1f\t%.1f\t%.1f\n"
-            "%.1f\t%.1f\t%.1f\t%.1f" % self.in_row_order
-        )
+        return ("%.1f\t%.1f\t%.1f\t%.1f\n"
+                "%.1f\t%.1f\t%.1f\t%.1f\n"
+                "%.1f\t%.1f\t%.1f\t%.1f\n"
+                "%.1f\t%.1f\t%.1f\t%.1f" % self.in_row_order)
 
     @property
     def in_row_order(self):
         """tuple of 16 floats: The contents of the matrix in row order."""
-        return (
-            self.m00,
-            self.m01,
-            self.m02,
-            self.m03,
-            self.m10,
-            self.m11,
-            self.m12,
-            self.m13,
-            self.m20,
-            self.m21,
-            self.m22,
-            self.m23,
-            self.m30,
-            self.m31,
-            self.m32,
-            self.m33,
-        )
+        return self.m00, self.m01, self.m02, self.m03,\
+            self.m10, self.m11, self.m12, self.m13,\
+            self.m20, self.m21, self.m22, self.m23,\
+            self.m30, self.m31, self.m32, self.m33
 
     @property
     def in_column_order(self):
         """tuple of 16 floats: The contents of the matrix in column order."""
-        return (
-            self.m00,
-            self.m10,
-            self.m20,
-            self.m30,
-            self.m01,
-            self.m11,
-            self.m21,
-            self.m31,
-            self.m02,
-            self.m12,
-            self.m22,
-            self.m32,
-            self.m03,
-            self.m13,
-            self.m23,
-            self.m33,
-        )
+        return self.m00, self.m10, self.m20, self.m30,\
+            self.m01, self.m11, self.m21, self.m31,\
+            self.m02, self.m12, self.m22, self.m32,\
+            self.m03, self.m13, self.m23, self.m33
 
     @property
     def forward_xyz(self):
@@ -667,29 +586,16 @@ class Matrix44:
 class Quaternion:
     """Represents the rotation of an object in the world."""
 
-    __slots__ = ("_q0", "_q1", "_q2", "_q3")
+    __slots__ = ('_q0', '_q1', '_q2', '_q3')
 
-    def __init__(
-        self,
-        q0: float = None,
-        q1: float = None,
-        q2: float = None,
-        q3: float = None,
-        angle_z: Angle = None,
-    ):
-        is_quaternion = (
-            q0 is not None and q1 is not None and q2 is not None and q3 is not None
-        )
+    def __init__(self, q0: float = None, q1: float = None, q2: float = None, q3: float = None, angle_z: Angle = None):
+        is_quaternion = q0 is not None and q1 is not None and q2 is not None and q3 is not None
 
         if not is_quaternion and angle_z is None:
-            raise ValueError(
-                "Expected either the q0 q1 q2 and q3 or angle_z keyword arguments"
-            )
+            raise ValueError("Expected either the q0 q1 q2 and q3 or angle_z keyword arguments")
         if is_quaternion and angle_z:
-            raise ValueError(
-                "Expected either the q0 q1 q2 and q3 or angle_z keyword argument,"
-                "not both"
-            )
+            raise ValueError("Expected either the q0 q1 q2 and q3 or angle_z keyword argument,"
+                             "not both")
         if angle_z is not None:
             if not isinstance(angle_z, Angle):
                 raise TypeError("Unsupported type for angle_z expected Angle")
@@ -727,9 +633,7 @@ class Quaternion:
         Defined as the rotation in the z axis.
         """
         q0, q1, q2, q3 = self.q0_q1_q2_q3
-        return Angle(
-            radians=math.atan2(2 * (q1 * q2 + q0 * q3), 1 - 2 * (q2**2 + q3**2))
-        )
+        return Angle(radians=math.atan2(2 * (q1 * q2 + q0 * q3), 1 - 2 * (q2**2 + q3**2)))
 
     @property
     def q0_q1_q2_q3(self):
@@ -764,42 +668,26 @@ class Quaternion:
         q1q3x2 = q1x2 * self.q3
         q2q3x2 = 2.0 * self.q2 * self.q3
 
-        m00 = q0q0 + q1q1 - q2q2 - q3q3
-        m01 = q1q2x2 + q0q3x2
-        m02 = q1q3x2 - q0q2x2
+        m00 = (q0q0 + q1q1 - q2q2 - q3q3)
+        m01 = (q1q2x2 + q0q3x2)
+        m02 = (q1q3x2 - q0q2x2)
 
-        m10 = q1q2x2 - q0q3x2
-        m11 = q0q0 - q1q1 + q2q2 - q3q3
-        m12 = q0q1x2 + q2q3x2
+        m10 = (q1q2x2 - q0q3x2)
+        m11 = (q0q0 - q1q1 + q2q2 - q3q3)
+        m12 = (q0q1x2 + q2q3x2)
 
-        m20 = q0q2x2 + q1q3x2
-        m21 = q2q3x2 - q0q1x2
-        m22 = q0q0 - q1q1 - q2q2 + q3q3
+        m20 = (q0q2x2 + q1q3x2)
+        m21 = (q2q3x2 - q0q1x2)
+        m22 = (q0q0 - q1q1 - q2q2 + q3q3)
 
-        return Matrix44(
-            m00,
-            m10,
-            m20,
-            float(pos_x),
-            m01,
-            m11,
-            m21,
-            float(pos_y),
-            m02,
-            m12,
-            m22,
-            float(pos_z),
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-        )
+        return Matrix44(m00, m10, m20, float(pos_x),
+                        m01, m11, m21, float(pos_y),
+                        m02, m12, m22, float(pos_z),
+                        0.0, 0.0, 0.0, 1.0)
 
     def __repr__(self):
-        return (
-            f"<{self.__class__.__name__} q0: {self.q0:.2f} q1: {self.q1:.2f}"
-            f" q2: {self.q2:.2f} q3: {self.q3:.2f} {self.angle_z}>"
-        )
+        return (f"<{self.__class__.__name__} q0: {self.q0:.2f} q1: {self.q1:.2f}"
+                f" q2: {self.q2:.2f} q3: {self.q3:.2f} {self.angle_z}>")
 
 
 class Position(Vector3):
@@ -811,7 +699,6 @@ class Position(Vector3):
     :param y: Y position in millimeters
     :param z: Z position in millimeters
     """
-
     __slots__ = ()
 
 
@@ -840,21 +727,10 @@ class Pose:
             pose = Pose(x=50, y=0, z=0, angle_z=anki_vector.util.Angle(degrees=0))
             robot.behavior.go_to_pose(pose)
     """
+    __slots__ = ('_position', '_rotation', '_origin_id')
 
-    __slots__ = ("_position", "_rotation", "_origin_id")
-
-    def __init__(
-        self,
-        x: float,
-        y: float,
-        z: float,
-        q0: float = None,
-        q1: float = None,
-        q2: float = None,
-        q3: float = None,
-        angle_z: Angle = None,
-        origin_id: int = -1,
-    ):
+    def __init__(self, x: float, y: float, z: float, q0: float = None, q1: float = None, q2: float = None, q3: float = None,
+                 angle_z: Angle = None, origin_id: int = -1):
         self._position = Position(x, y, z)
         self._rotation = Quaternion(q0, q1, q2, q3, angle_z)
         self._origin_id = origin_id
@@ -875,10 +751,8 @@ class Pose:
         return self._origin_id
 
     def __repr__(self):
-        return (
-            f"<{self.__class__.__name__}: {self._position}"
-            f" {self._rotation} <Origin Id: {self._origin_id}>>"
-        )
+        return (f"<{self.__class__.__name__}: {self._position}"
+                f" {self._rotation} <Origin Id: {self._origin_id}>>")
 
     def define_pose_relative_this(self, new_pose):
         """Creates a new pose such that new_pose's origin is now at the location of this pose.
@@ -901,7 +775,11 @@ class Pose:
         res_y = y + (sin_angle * new_x) + (cos_angle * new_y)
         res_z = z + new_z
         res_angle = angle_z + new_angle_z
-        return Pose(res_x, res_y, res_z, angle_z=res_angle, origin_id=self._origin_id)
+        return Pose(res_x,
+                    res_y,
+                    res_z,
+                    angle_z=res_angle,
+                    origin_id=self._origin_id)
 
     @property
     def is_valid(self) -> bool:
@@ -918,11 +796,8 @@ class Pose:
         Returns:
             True if the two poses are comparable, False otherwise.
         """
-        return (
-            self.is_valid
-            and other_pose.is_valid
-            and (self.origin_id == other_pose.origin_id)
-        )
+        return (self.is_valid and other_pose.is_valid
+                and (self.origin_id == other_pose.origin_id))
 
     def to_matrix(self) -> Matrix44:
         """Convert the Pose to a Matrix44.
@@ -933,7 +808,8 @@ class Pose:
         return self.rotation.to_matrix(*self.position.x_y_z)
 
     def to_proto_pose_struct(self) -> protocol.PoseStruct:
-        """Converts the Pose into the robot's messaging pose format."""
+        """Converts the Pose into the robot's messaging pose format.
+        """
         return protocol.PoseStruct(
             x=self._position.x,
             y=self._position.y,
@@ -942,24 +818,21 @@ class Pose:
             q1=self._rotation.q1,
             q2=self._rotation.q2,
             q3=self._rotation.q3,
-            origin_id=self._origin_id,
-        )
+            origin_id=self._origin_id)
 
 
 class ImageRect:
-    """Defines a bounding box within an image frame.
+    '''Defines a bounding box within an image frame.
 
     This is used when objects and faces are observed to denote where in
     the robot's camera view the object or face actually appears.  It's then
     used by the annotate module to show an outline of a box around
     the object or face.
-    """
+    '''
 
-    __slots__ = ("_x_top_left", "_y_top_left", "_width", "_height")
+    __slots__ = ('_x_top_left', '_y_top_left', '_width', '_height')
 
-    def __init__(
-        self, x_top_left: float, y_top_left: float, width: float, height: float
-    ):
+    def __init__(self, x_top_left: float, y_top_left: float, width: float, height: float):
         self._x_top_left = float(x_top_left)
         self._y_top_left = float(y_top_left)
         self._width = float(width)
@@ -1009,30 +882,20 @@ class Distance:
             represent (cannot be combined with ``distance_mm``).
     """
 
-    __slots__ = "_distance_mm"
+    __slots__ = ('_distance_mm')
 
-    def __init__(
-        self, distance_mm: float = None, distance_inches: float = None
-    ):  # pylint: disable=redefined-outer-name
+    def __init__(self, distance_mm: float = None, distance_inches: float = None):  # pylint: disable=redefined-outer-name
         if distance_mm is None and distance_inches is None:
-            raise ValueError(
-                "Expected either the distance_mm or distance_inches keyword argument"
-            )
+            raise ValueError("Expected either the distance_mm or distance_inches keyword argument")
         if distance_mm and distance_inches:
-            raise ValueError(
-                "Expected either the distance_mm or distance_inches keyword argument, not both"
-            )
+            raise ValueError("Expected either the distance_mm or distance_inches keyword argument, not both")
 
         if distance_inches is not None:
             distance_mm = distance_inches * 25.4
         self._distance_mm = float(distance_mm)
 
     def __repr__(self):
-        return "<%s %.2f mm (%.2f inches)>" % (
-            self.__class__.__name__,
-            self.distance_mm,
-            self.distance_inches,
-        )
+        return "<%s %.2f mm (%.2f inches)>" % (self.__class__.__name__, self.distance_mm, self.distance_inches)
 
     def __add__(self, other):
         if not isinstance(other, Distance):
@@ -1088,11 +951,9 @@ class Speed:
             should represent.
     """
 
-    __slots__ = "_speed_mmps"
+    __slots__ = ('_speed_mmps')
 
-    def __init__(
-        self, speed_mmps: float = None
-    ):  # pylint: disable=redefined-outer-name
+    def __init__(self, speed_mmps: float = None):  # pylint: disable=redefined-outer-name
         if speed_mmps is None:
             raise ValueError("Expected speed_mmps keyword argument")
         self._speed_mmps = float(speed_mmps)
@@ -1134,8 +995,8 @@ def speed_mmps(speed_mmps: float):  # pylint: disable=redefined-outer-name
 class BaseOverlay:
     """A base overlay is used as a base class for other forms of overlays that can be drawn on top of an image.
 
-    :param line_thickness: The thickness of the line being drawn.
-    :param line_color: The color of the line to be drawn.
+        :param line_thickness: The thickness of the line being drawn.
+        :param line_color: The color of the line to be drawn.
     """
 
     def __init__(self, line_thickness: int, line_color: tuple):
@@ -1156,20 +1017,14 @@ class BaseOverlay:
 class RectangleOverlay(BaseOverlay):
     """A rectangle that can be drawn on top of a given image.
 
-    :param width: The width of the rectangle to be drawn.
-    :param height: The height of the rectangle to be drawn.
-    :param line_thickness: The thickness of the line being drawn.
-    :param line_color: The color of the line to be drawn.
+        :param width: The width of the rectangle to be drawn.
+        :param height: The height of the rectangle to be drawn.
+        :param line_thickness: The thickness of the line being drawn.
+        :param line_color: The color of the line to be drawn.
     """
 
     # @TODO Implement overlay using an ImageRect rather than a raw width & height
-    def __init__(
-        self,
-        width: int,
-        height: int,
-        line_thickness: int = 5,
-        line_color: tuple = (255, 0, 0),
-    ):
+    def __init__(self, width: int, height: int, line_thickness: int = 5, line_color: tuple = (255, 0, 0)):
         super().__init__(line_thickness, line_color)
         self._width: int = width
         self._height: int = height
@@ -1192,16 +1047,14 @@ class RectangleOverlay(BaseOverlay):
         remaining_width = image_width - self.width
         remaining_height = image_height - self.height
         x1, y1 = remaining_width // 2, remaining_height // 2
-        x2, y2 = (image_width - (remaining_width // 2)), (
-            image_height - (remaining_height // 2)
-        )
+        x2, y2 = (image_width - (remaining_width // 2)), (image_height - (remaining_height // 2))
 
         for i in range(0, self.line_thickness):
             d.rectangle([x1 + i, y1 + i, x2 - i, y2 - i], outline=self.line_color)
 
 
 class Component:
-    """Base class for all components."""
+    """ Base class for all components."""
 
     def __init__(self, robot):
         self.logger = get_class_logger(__name__, self)
@@ -1221,7 +1074,8 @@ class Component:
 
     @property
     def grpc_interface(self):
-        """A direct reference to the connected aiogrpc interface."""
+        """A direct reference to the connected aiogrpc interface.
+        """
         return self._robot.conn.grpc_interface
 
 
@@ -1244,23 +1098,15 @@ def read_configuration(serial: str, name: str, logger: logging.Logger) -> dict:
 
     sections = parser.sections()
     if not sections:
-        raise VectorConfigurationException(
-            "Could not find the sdk configuration file. Please run `python3 -m anki_vector.configure` to set up your Vector for SDK usage."
-        )
+        raise VectorConfigurationException('Could not find the sdk configuration file. Please run `python3 -m anki_vector.configure` to set up your Vector for SDK usage.')
     elif (serial is None) and (name is None):
         if len(sections) == 1:
             serial = sections[0]
-            logger.warning(
-                "No serial number or name provided. Automatically selecting {}".format(
-                    serial
-                )
-            )
+            logger.warning("No serial number or name provided. Automatically selecting {}".format(serial))
         else:
-            raise VectorConfigurationException(
-                "Found multiple robot serial numbers. "
-                "Please provide the serial number or name of the Robot you want to control.\n\n"
-                "Example: ./01_hello_world.py --serial {{robot_serial_number}}"
-            )
+            raise VectorConfigurationException("Found multiple robot serial numbers. "
+                                               "Please provide the serial number or name of the Robot you want to control.\n\n"
+                                               "Example: ./01_hello_world.py --serial {{robot_serial_number}}")
 
     config = {k.lower(): v for k, v in parser.items()}
 
@@ -1269,26 +1115,18 @@ def read_configuration(serial: str, name: str, logger: logging.Logger) -> dict:
         try:
             return config[serial]
         except KeyError:
-            raise VectorConfigurationException(
-                "Could not find matching robot info for given serial number: {}. "
-                "Please check your serial number is correct.\n\n"
-                "Example: ./01_hello_world.py --serial {{robot_serial_number}}",
-                serial,
-            )
+            raise VectorConfigurationException("Could not find matching robot info for given serial number: {}. "
+                                               "Please check your serial number is correct.\n\n"
+                                               "Example: ./01_hello_world.py --serial {{robot_serial_number}}", serial)
     else:
         for keySerial in config:
             for key in config[keySerial]:
                 if config[keySerial][key] == name:
                     return config[keySerial]
                 if config[keySerial][key].lower() == name.lower():
-                    logger.warning(
-                        "Using case-insensitive name match found in config. Set 'name' field to match 'Vector-A1B2' format."
-                    )
+                    logger.warning("Using case-insensitive name match found in config. Set 'name' field to match 'Vector-A1B2' format.")
                     return config[keySerial]
 
-        raise VectorConfigurationException(
-            "Could not find matching robot info for given name: {}. "
-            "Please check your name is correct.\n\n"
-            "Example: ./01_hello_world.py --name {{robot_name}}",
-            name,
-        )
+        raise VectorConfigurationException("Could not find matching robot info for given name: {}. "
+                                           "Please check your name is correct.\n\n"
+                                           "Example: ./01_hello_world.py --name {{robot_name}}", name)

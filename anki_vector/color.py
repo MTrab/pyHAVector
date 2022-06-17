@@ -33,9 +33,9 @@ class Color:
         self.name = name
         self._int_color = 0
         if int_color is not None:
-            self._int_color = int_color | 0xFF
+            self._int_color = int_color | 0xff
         elif rgb is not None:
-            self._int_color = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xFF
+            self._int_color = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xff
 
     @property
     def int_color(self) -> int:
@@ -50,9 +50,9 @@ class Color:
         conversion will reduce network traffic when sending Screen data.
         """
 
-        red5 = ((self._int_color >> 24) & 0xFF) >> 3
-        green6 = ((self._int_color >> 16) & 0xFF) >> 2
-        blue5 = ((self._int_color >> 8) & 0xFF) >> 3
+        red5 = ((self._int_color >> 24) & 0xff) >> 3
+        green6 = ((self._int_color >> 16) & 0xff) >> 2
+        blue5 = ((self._int_color >> 8) & 0xff) >> 3
 
         green3_hi = green6 >> 3
         green3_low = green6 & 0x07
@@ -64,25 +64,25 @@ class Color:
 
 
 #: :class:`Color`: Green color instance.
-green = Color(name="green", int_color=0x00FF00FF)
+green = Color(name="green", int_color=0x00ff00ff)
 
 #: :class:`Color`: Red color instance.
-red = Color(name="red", int_color=0xFF0000FF)
+red = Color(name="red", int_color=0xff0000ff)
 
 #: :class:`Color`: Blue color instance.
-blue = Color(name="blue", int_color=0x0000FFFF)
+blue = Color(name="blue", int_color=0x0000ffff)
 
 #: :class:`Color`: Cyan color instance.
-cyan = Color(name="cyan", int_color=0x00FFFFFF)
+cyan = Color(name="cyan", int_color=0x00ffffff)
 
 #: :class:`Color`: Magenta color instance.
-magenta = Color(name="magenta", int_color=0xFF00FFFF)
+magenta = Color(name="magenta", int_color=0xff00ffff)
 
 #: :class:`Color`: Yellow color instance.
-yellow = Color(name="yellow", int_color=0xFFFF00FF)
+yellow = Color(name="yellow", int_color=0xffff00ff)
 
 #: :class:`Color`: White color instance.
-white = Color(name="white", int_color=0xFFFFFFFF)
+white = Color(name="white", int_color=0xffffffff)
 
 #: :class:`Color`: Instance representing no color (i.e., lights off).
 off = Color(name="off")

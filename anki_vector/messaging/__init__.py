@@ -39,6 +39,7 @@ Protobuf and gRPC messages exposed to the Vector Python SDK.
 For information about individual messages and their parameters, see :doc:`the protobuf documentation </proto>`.
 """
 
-from . import client, protocol
+from . import protocol
+from . import client
 
-__all__ = ["protocol", "client"]
+__all__ = ['protocol', 'client']

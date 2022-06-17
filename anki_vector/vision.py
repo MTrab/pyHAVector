@@ -22,11 +22,11 @@ processing on the robot.
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ["VisionComponent"]
+__all__ = ['VisionComponent']
 
 from concurrent import futures
 
-from . import connection, events, util
+from . import util, connection, events
 from .messaging import protocol
 
 
@@ -47,19 +47,12 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         # self._detect_motion = False
         self._display_camera_feed_on_face = False
 
-        robot.events.subscribe(
-            self._handle_mirror_mode_disabled_event, events.Events.mirror_mode_disabled
-        )
-        robot.events.subscribe(
-            self._handle_vision_modes_auto_disabled_event,
-            events.Events.vision_modes_auto_disabled,
-        )
+        robot.events.subscribe(self._handle_mirror_mode_disabled_event, events.Events.mirror_mode_disabled)
+        robot.events.subscribe(self._handle_vision_modes_auto_disabled_event, events.Events.vision_modes_auto_disabled)
 
     def close(self):
         """Close all the running vision modes and wait for a response."""
-        vision_mode = (
-            self.disable_all_vision_modes()
-        )  # pylint: disable=assignment-from-no-return
+        vision_mode = self.disable_all_vision_modes()  # pylint: disable=assignment-from-no-return
         if isinstance(vision_mode, futures.Future):
             vision_mode.result()
 
@@ -119,21 +112,17 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         """
         self._detect_custom_objects = detect_custom_objects
 
-        enable_marker_detection_request = protocol.EnableMarkerDetectionRequest(
-            enable=detect_custom_objects
-        )
-        return await self.grpc_interface.EnableMarkerDetection(
-            enable_marker_detection_request
-        )
+        enable_marker_detection_request = protocol.EnableMarkerDetectionRequest(enable=detect_custom_objects)
+        return await self.grpc_interface.EnableMarkerDetection(enable_marker_detection_request)
 
     @connection.on_connection_thread()
     async def enable_face_detection(
-        self,
-        detect_faces: bool = True,
-        # detect_smile: bool = False,
-        estimate_expression: bool = False,
-        # detect_blink: bool = False,
-        # detect_gaze: bool = False
+            self,
+            detect_faces: bool = True,
+            # detect_smile: bool = False,
+            estimate_expression: bool = False,
+            # detect_blink: bool = False,
+            # detect_gaze: bool = False
     ):
         """Enable face detection on the robot's camera
 
@@ -150,11 +139,8 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
             enable_smile_detection=False,
             enable_expression_estimation=estimate_expression,
             enable_blink_detection=False,
-            enable_gaze_detection=False,
-        )
-        return await self.grpc_interface.EnableFaceDetection(
-            enable_face_detection_request
-        )
+            enable_gaze_detection=False)
+        return await self.grpc_interface.EnableFaceDetection(enable_face_detection_request)
 
     # TODO implement
     # @connection.on_connection_thread()
@@ -175,9 +161,7 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
     #     return await self.grpc_interface.EnableMotionDetection(enable_motion_detection_request)
 
     @connection.on_connection_thread()
-    async def enable_display_camera_feed_on_face(
-        self, display_camera_feed_on_face: bool = True
-    ):
+    async def enable_display_camera_feed_on_face(self, display_camera_feed_on_face: bool = True):
         """Display the robot's camera feed on its face along with any detections (if enabled)
 
         :param display_camera_feed_on_face: Specify whether we want to display the robot's camera feed on its face.
@@ -194,7 +178,5 @@ class VisionComponent(util.Component):  # pylint: disable=too-few-public-methods
         """
         self._display_camera_feed_on_face = display_camera_feed_on_face
 
-        display_camera_feed_request = protocol.EnableMirrorModeRequest(
-            enable=display_camera_feed_on_face
-        )
+        display_camera_feed_request = protocol.EnableMirrorModeRequest(enable=display_camera_feed_on_face)
         return await self.grpc_interface.EnableMirrorMode(display_camera_feed_request)
