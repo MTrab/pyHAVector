@@ -66,7 +66,7 @@ class Robot:
     @property
     def conn(self) -> Connection:
         """A reference to the :class:`~anki_vector.connection.Connection` instance."""
-        if self._conn:
+        if hasattr(self, "_conn"):
             return self._conn
         else:
             return None
