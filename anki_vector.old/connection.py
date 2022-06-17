@@ -484,9 +484,7 @@ class Connection:
         :param timeout: The time allotted to attempt to release control, in seconds.
         """
         if self._thread is threading.current_thread():
-            return asyncio.ensure_future(
-                self._release_control(timeout=timeout)
-            )
+            return asyncio.ensure_future(self._release_control(timeout=timeout))
         return self.run_coroutine(self._release_control(timeout=timeout))
 
     async def _release_control(self, timeout: float = 10.0):
