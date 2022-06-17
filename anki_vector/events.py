@@ -243,6 +243,7 @@ class EventHandler:
     def _unpackage_event(self, enum_key: str, event):
         event_key = event.WhichOneof(enum_key)
         event_data = getattr(event, event_key)
+        self.logger.warning("Event %s", enum_key)
         if getattr(event_data, "WhichOneof"):
             # Object events are automatically unpackaged into their sub-event classes.
             try:
@@ -261,7 +262,7 @@ class EventHandler:
             async for evt in self._conn.grpc_interface.EventStream(req):
                 if not self.listening_for_events:
                     break
-                self.logger.warning("Event %s", evt.event)
+
                 try:
                     unpackaged_event_key, unpackaged_event_data = self._unpackage_event(
                         "event_type", evt.event
