@@ -34,11 +34,7 @@ class Robot:
         """Initialize Robot object."""
 
         config = config if config is not None else {}
-        try:
-            config = {**read_configuration(serial, name, settings_dir), **config}
-        except VectorConfigurationException:
-            Configure(email, password, name, serial, ip, settings_dir).run()
-            config = {**read_configuration(serial, name, settings_dir), **config}
+        config = {**read_configuration(serial, name, settings_dir), **config}
 
         self._name = config["name"]
         self._ip = ip if ip is not None else config["ip"]

@@ -66,17 +66,7 @@ class Configure:
         )
         self._token = None
 
-    # @property
-    # def name(self):
-    #     """Return name."""
-    #     return "Anki Cloud"
-
-    # @property
-    # def handler(self):
-    #     """Return handler."""
-    #     return self._handler
-
-    def __get_cert(self) -> bytes:
+    async def __async_get_cert(self) -> bytes:
         """Get Vector certificate."""
         res = requests.get(f"{TOKEN_URL}{self._serial}")
         if res.status_code != 200:
@@ -85,7 +75,7 @@ class Configure:
         self._cert = res.content
         return self._cert
 
-    def __save_cert(self) -> str:
+    async def __async_save_cert(self) -> str:
         """Write Vector's certificate to a file located in the user's home directory"""
         os.makedirs(str(self._settings_dir), exist_ok=True)
         self._cert_file = str(self._settings_dir + f"/{self._name}-{self._serial}.cert")
@@ -95,7 +85,7 @@ class Configure:
             file.write(self._cert)
         return self._cert_file
 
-    def __validate_cert_name(self):
+    async def __async_validate_cert_name(self):
         """Validate the name on Vector's certificate against the user-provided name"""
         with open(self._cert_file, "rb") as file:
             cert_file = file.read()
@@ -110,7 +100,7 @@ class Configure:
                             "Please verify the name, and try again."
                         )
 
-    def __get_session_token(self) -> str:
+    async def __async_get_session_token(self) -> str:
         """Get Vector session token."""
         payload = {"username": self._email, "password": self._password}
 
@@ -123,7 +113,7 @@ class Configure:
         self._token = res.json()
         return self._token
 
-    def __user_authentication(self) -> str:
+    async def __async_user_authentication(self) -> str:
         """Authenticate against the API."""
         # Pin the robot certificate for opening the channel
         creds = grpc.ssl_channel_credentials(root_certificates=self._cert)
@@ -172,7 +162,7 @@ class Configure:
         self._guid = response.client_token_guid
         return self._guid
 
-    def __write_config(self, clear: bool = True):
+    async def __async_write_config(self, clear: bool = True):
         """Write config to sdk_config.ini."""
         config_file = str(self._settings_dir + "/config.ini")
 
@@ -206,11 +196,11 @@ class Configure:
             if os.path.exists(temp_file):
                 os.remove(temp_file)
 
-    def run(self):
+    async def async_run(self):
         """Run Vector configuration tasks."""
-        self.__get_cert()
-        self.__save_cert()
-        self.__validate_cert_name()
-        self.__get_session_token()
-        self.__user_authentication()
-        self.__write_config()
+        await self.__async_get_cert()
+        await self.__async_save_cert()
+        await self.__async_validate_cert_name()
+        await self.__async_get_session_token()
+        await self.__async_user_authentication()
+        await self.__async_write_config()
