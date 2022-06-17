@@ -261,6 +261,7 @@ class EventHandler:
             async for evt in self._conn.grpc_interface.EventStream(req):
                 if not self.listening_for_events:
                     break
+                self.logger.warning("Event %s", evt.event)
                 try:
                     unpackaged_event_key, unpackaged_event_data = self._unpackage_event(
                         "event_type", evt.event
