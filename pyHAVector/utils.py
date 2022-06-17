@@ -146,8 +146,8 @@ def read_configuration(serial: str, name: str, settings_dir: str = None) -> dict
     :param serial: Vector's serial number
     :param name: Vector's name
     """
-    home = settings_dir or Path.home()
-    conf_file = str(home / "config.ini")
+    home = settings_dir or (Path.home())
+    conf_file = str(home + "/config.ini")
     parser = configparser.ConfigParser(strict=False)
     parser.read(conf_file)
 
