@@ -66,7 +66,10 @@ class Robot:
     @property
     def conn(self) -> Connection:
         """A reference to the :class:`~anki_vector.connection.Connection` instance."""
-        return self._conn
+        if self._conn:
+            return self._conn
+        else:
+            return None
 
     @property
     def events(self) -> events.EventHandler:
