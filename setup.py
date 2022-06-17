@@ -1,40 +1,3 @@
-# Copyright (c) 2018 Anki, Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License in the file LICENSE.txt or at
-#
-#     https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-"""
-Anki/DDL Vector - Python SDK:
-    by cyb3rdog
-
-## With support for Production, EscapePod and OSKR robots! ##
-This is the extended fork of the original Anki Vector Python SDK.
-
-For more information, please visit the project Github site: https://github.com/cyb3rdog/vector-python-sdk
-
-The Vector SDK gives you direct access to Vector's unprecedented set of advanced sensors, AI capabilities, and robotics technologies including computer vision, intelligent mapping and navigation, and a groundbreaking collection of expressive animations.
-
-It's powerful but easy to use, complex but not complicated, and versatile enough to be used across a wide range of domains including enterprise, research, and entertainment. Find out more at https://developer.anki.com
-
-Vector SDK documentation: https://developer.anki.com/vector/docs/
-
-Official developer forum: https://forums.anki.com/
-
-Requirements:
-    * Python 3.6.1
-    * Python 3.7
-    * Python 3.8
-"""
-
 import os.path
 import sys
 
@@ -45,17 +8,7 @@ if sys.version_info < (3, 6, 1):
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
-
-def fetch_version():
-    """Get the version from the package"""
-    with open(os.path.join(HERE, "anki_vector", "version.py")) as version_file:
-        versions = {}
-        exec(version_file.read(), versions)
-        return versions
-
-
-VERSION_DATA = fetch_version()
-VERSION = VERSION_DATA["__version__"]
+VERSION = "0.0.1"
 
 
 def get_requirements():
@@ -70,10 +23,9 @@ def get_requirements():
 setup(
     name="pyHAVector",
     version=VERSION,
-    description="The Vector SDK is a connected vision- and character-based robotics platform for everyone.",
+    description="Customized Anki/Digital Dream Labs SDK",
     url="https://github.com/mtrab/pyhavector",
-    author="Anki, Inc",
-    author_email="developer@anki.com",
+    author="Malene Trab",
     license="Apache License, Version 2.0",
     packages=find_packages(),
     classifiers=[
