@@ -193,9 +193,9 @@ class EventHandler:
             )
 
         if threading.current_thread() is thread:
-            future = asyncio.ensure_future(callback, loop=loop)
+            future = asyncio.ensure_future(callback)
         else:
-            future = asyncio.run_coroutine_threadsafe(callback, loop=loop)
+            future = asyncio.run_coroutine_threadsafe(callback)
         future.add_done_callback(self._done_callback)
 
     def _done_callback(self, completed_future):
