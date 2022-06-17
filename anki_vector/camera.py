@@ -25,14 +25,18 @@ The camera resolution is 1280 x 720 with a field of view of 90 deg (H) x 50 deg 
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ["EvtNewRawCameraImage", "EvtNewCameraImage",
-           "CameraComponent", "CameraImage"]
+__all__ = [
+    "EvtNewRawCameraImage",
+    "EvtNewCameraImage",
+    "CameraComponent",
+    "CameraImage",
+]
 
 import asyncio
-from concurrent.futures import CancelledError
 import io
-import time
 import sys
+import time
+from concurrent.futures import CancelledError
 
 from . import annotate, connection, util
 from .events import Events
@@ -83,7 +87,12 @@ class CameraImage:
     :param image_id: An image number that increments on every new image received.
     """
 
-    def __init__(self, raw_image: Image.Image, image_annotator: annotate.ImageAnnotator, image_id: int):
+    def __init__(
+        self,
+        raw_image: Image.Image,
+        image_annotator: annotate.ImageAnnotator,
+        image_id: int,
+    ):
 
         self._raw_image = raw_image
         self._image_annotator = image_annotator
@@ -105,7 +114,12 @@ class CameraImage:
         """The time the image was received and processed by the SDK."""
         return self._image_recv_time
 
-    def annotate_image(self, scale: float = None, fit_size: tuple = None, resample_mode: int = annotate.RESAMPLE_MODE_NEAREST) -> Image.Image:
+    def annotate_image(
+        self,
+        scale: float = None,
+        fit_size: tuple = None,
+        resample_mode: int = annotate.RESAMPLE_MODE_NEAREST,
+    ) -> Image.Image:
         """Adds any enabled annotations to the image.
         Optionally resizes the image prior to annotations being applied.  The
         aspect ratio of the resulting image always matches that of the raw image.
@@ -129,10 +143,9 @@ class CameraImage:
             (fast) or :attr:`~anki_vector.annotate.RESAMPLE_MODE_BILINEAR` (slower,
             but smoother).
         """
-        return self._image_annotator.annotate_image(self._raw_image,
-                                                    scale=scale,
-                                                    fit_size=fit_size,
-                                                    resample_mode=resample_mode)
+        return self._image_annotator.annotate_image(
+            self._raw_image, scale=scale, fit_size=fit_size, resample_mode=resample_mode
+        )
 
 
 class CameraComponent(util.Component):
@@ -162,7 +175,9 @@ class CameraComponent(util.Component):
     def __init__(self, robot):
         super().__init__(robot)
 
-        self._image_annotator: annotate.ImageAnnotator = self.annotator_factory(self.robot.world)
+        self._image_annotator: annotate.ImageAnnotator = self.annotator_factory(
+            self.robot.world
+        )
         self._latest_image: CameraImage = None
         self._latest_image_id: int = None
         self._camera_feed_task: asyncio.Task = None
@@ -245,7 +260,9 @@ class CameraComponent(util.Component):
         """
         if not self._camera_feed_task or self._camera_feed_task.done():
             self._enabled = True
-            self._camera_feed_task = self.conn.loop.create_task(self._request_and_handle_images())
+            self._camera_feed_task = self.conn.loop.create_task(
+                self._request_and_handle_images()
+            )
 
     def close_camera_feed(self) -> None:
         """Cancel camera feed task."""
@@ -256,7 +273,9 @@ class CameraComponent(util.Component):
             try:
                 future.result()
             except CancelledError:
-                self.logger.debug('Camera feed task was cancelled. This is expected during disconnection.')
+                self.logger.debug(
+                    "Camera feed task was cancelled. This is expected during disconnection."
+                )
             # wait for streaming to end, up to 10 seconds
             iterations = 0
             max_iterations = 100
@@ -268,8 +287,10 @@ class CameraComponent(util.Component):
                     # because other SDK functions will still work and
                     # the RPC should have had enough time to finish
                     # which means we _should_ be in a good state.
-                    self.logger.info('Camera Feed closed, but streaming on'
-                                     ' robot remained enabled.  This is unexpected.')
+                    self.logger.info(
+                        "Camera Feed closed, but streaming on"
+                        " robot remained enabled.  This is unexpected."
+                    )
                     break
             self._camera_feed_task = None
 
@@ -305,10 +326,16 @@ class CameraComponent(util.Component):
         self._latest_image = CameraImage(image, self._image_annotator, msg.image_id)
         self._latest_image_id = msg.image_id
 
-        self.conn.run_soon(self.robot.events.dispatch_event(EvtNewRawCameraImage(image),
-                                                            Events.new_raw_camera_image))
-        self.conn.run_soon(self.robot.events.dispatch_event(EvtNewCameraImage(self._latest_image),
-                                                            Events.new_camera_image))
+        self.conn.run_soon(
+            self.robot.events.dispatch_event(
+                EvtNewRawCameraImage(image), Events.new_raw_camera_image
+            )
+        )
+        self.conn.run_soon(
+            self.robot.events.dispatch_event(
+                EvtNewCameraImage(self._latest_image), Events.new_camera_image
+            )
+        )
 
         if self._image_annotator.annotation_enabled:
             image = self._image_annotator.annotate_image(image)
@@ -323,11 +350,15 @@ class CameraComponent(util.Component):
                 # If the camera feed is disabled after stream is setup, exit the stream
                 # (the camera feed on the robot is disabled internally on stream exit)
                 if not self._enabled:
-                    self.logger.warning('Camera feed has been disabled. Enable the feed to start/continue receiving camera feed data')
+                    self.logger.warning(
+                        "Camera feed has been disabled. Enable the feed to start/continue receiving camera feed data"
+                    )
                     return
                 self._unpack_image(evt)
         except CancelledError:
-            self.logger.debug('Camera feed task was cancelled. This is expected during disconnection.')
+            self.logger.debug(
+                "Camera feed task was cancelled. This is expected during disconnection."
+            )
 
     @connection.on_connection_thread()
     async def capture_single_image(self) -> CameraImage:
@@ -355,7 +386,7 @@ class CameraComponent(util.Component):
             image = _convert_to_pillow_image(res.data)
             return CameraImage(image, self._image_annotator, res.image_id)
 
-        self.logger.error('Failed to capture a single image')
+        self.logger.error("Failed to capture a single image")
 
 
 class EvtNewRawCameraImage:  # pylint: disable=too-few-public-methods
