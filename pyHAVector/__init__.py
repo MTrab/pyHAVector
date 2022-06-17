@@ -31,6 +31,7 @@ class Robot:
     ):
         """Initialize Robot object."""
 
+        self._is_configured = False
         config = config if config is not None else {}
         config = {**read_configuration(serial, name, settings_dir), **config}
 
@@ -41,14 +42,23 @@ class Robot:
         self._port = "443"
         self._serial = serial
 
-        self._conn = Connection(
-            self._name,
-            ":".join([self._ip, self._port]),
-            self._cert_file,
-            self._guid,
-            behavior_control_level,
-        )
-        self._events = EventHandler(self)
+        if not self._name or not self._ip or not self._cert_file or not self._guid:
+            self._is_configured = False
+        else:
+            self._is_configured = True
+            self._conn = Connection(
+                self._name,
+                ":".join([self._ip, self._port]),
+                self._cert_file,
+                self._guid,
+                behavior_control_level,
+            )
+            self._events = EventHandler(self)
+
+    @property
+    def is_configured(self) -> bool:
+        """Returns true if configuration was found."""
+        return self._is_configured
 
     @property
     def conn(self) -> Connection:

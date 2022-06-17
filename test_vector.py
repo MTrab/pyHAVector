@@ -34,7 +34,6 @@ except VectorConfigurationException:
         settings_dir=str(Path.cwd()) + "/vector_config",
     )
 
-
 robot.connect()
 
 asyncio.run(robot.async_speak("Testing my voice"))
