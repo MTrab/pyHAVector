@@ -243,7 +243,7 @@ class EventHandler:
     def _unpackage_event(self, enum_key: str, event):
         event_key = event.WhichOneof(enum_key)
         event_data = getattr(event, event_key)
-        self.logger.warning("Event %s", event)
+        # self.logger.warning("Event %s", event)
         if getattr(event_data, "WhichOneof"):
             # Object events are automatically unpackaged into their sub-event classes.
             try:
@@ -271,7 +271,7 @@ class EventHandler:
                         unpackaged_event_data, unpackaged_event_key
                     )
                 except TypeError:
-                    self.logger.warning("Unknown Event type")
+                    self.logger.warning("Unknown Event type: %s", evt.event)
         except CancelledError:
             self.logger.debug(
                 "Event handler task was cancelled. This is expected during disconnection."
