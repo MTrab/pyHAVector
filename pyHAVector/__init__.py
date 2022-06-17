@@ -33,7 +33,10 @@ class Robot:
 
         self._is_configured = False
         config = config if config is not None else {}
-        config = {**read_configuration(serial, name, settings_dir), **config}
+        try:
+            config = {**read_configuration(serial, name, settings_dir), **config}
+        except VectorConfigurationException:
+            return
 
         self._name = config["name"]
         self._ip = ip if ip is not None else config["ip"]
