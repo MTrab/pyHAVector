@@ -16,7 +16,7 @@
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['ViewerComponent', 'Viewer3DComponent']
+__all__ = ["ViewerComponent", "Viewer3DComponent"]
 
 import multiprocessing as mp
 import sys
@@ -77,17 +77,21 @@ class ViewerComponent(util.Component):
 
         self.robot.camera.init_camera_feed()
 
-        ctx = mp.get_context('spawn')
+        ctx = mp.get_context("spawn")
         self._close_event = ctx.Event()
         self._frame_queue = ctx.Queue(maxsize=4)
-        self._process = ctx.Process(target=camera_viewer.main,
-                                    args=(self._frame_queue,
-                                          self._close_event,
-                                          self.overlays,
-                                          timeout,
-                                          force_on_top),
-                                    daemon=True,
-                                    name="Camera Viewer Process")
+        self._process = ctx.Process(
+            target=camera_viewer.main,
+            args=(
+                self._frame_queue,
+                self._close_event,
+                self.overlays,
+                timeout,
+                force_on_top,
+            ),
+            daemon=True,
+            name="Camera Viewer Process",
+        )
         self._process.start()
 
     def close(self) -> None:
@@ -139,7 +143,11 @@ class ViewerComponent(util.Component):
         :param image: A frame from Vector's camera.
         """
         close_event = self._close_event
-        if self._frame_queue is not None and close_event is not None and not close_event.is_set():
+        if (
+            self._frame_queue is not None
+            and close_event is not None
+            and not close_event.is_set()
+        ):
             try:
                 self._frame_queue.put(image, False)
             except mp.queues.Full:
@@ -152,7 +160,7 @@ class ViewerComponent(util.Component):
         return image
 
 
-class _ExternalRenderCallFunctor():  # pylint: disable=too-few-public-methods
+class _ExternalRenderCallFunctor:  # pylint: disable=too-few-public-methods
     """Externally specified OpenGL render function.
 
     Allows extra geometry to be rendered into OpenGLViewer.
@@ -220,28 +228,32 @@ class Viewer3DComponent(util.Component):
         :param show_viewer_controls: Specifies whether to draw controls on the view.
         """
         from . import opengl
-        ctx = mp.get_context('spawn')
+
+        ctx = mp.get_context("spawn")
         self._close_event = ctx.Event()
         self._input_intent_queue = ctx.Queue(maxsize=10)
         self._nav_map_queue = ctx.Queue(maxsize=10)
         self._world_frame_queue = ctx.Queue(maxsize=10)
         self._extra_render_function_queue = ctx.Queue(maxsize=1)
         self._user_data_queue = ctx.Queue()
-        self._update_thread = threading.Thread(target=self._update,
-                                               args=(),
-                                               daemon=True,
-                                               name="3D Viewer Update Thread")
+        self._update_thread = threading.Thread(
+            target=self._update, args=(), daemon=True, name="3D Viewer Update Thread"
+        )
         self._update_thread.start()
-        self._process = ctx.Process(target=opengl.main,
-                                    args=(self._close_event,
-                                          self._input_intent_queue,
-                                          self._nav_map_queue,
-                                          self._world_frame_queue,
-                                          self._extra_render_function_queue,
-                                          self._user_data_queue,
-                                          show_viewer_controls),
-                                    daemon=True,
-                                    name="3D Viewer Process")
+        self._process = ctx.Process(
+            target=opengl.main,
+            args=(
+                self._close_event,
+                self._input_intent_queue,
+                self._nav_map_queue,
+                self._world_frame_queue,
+                self._extra_render_function_queue,
+                self._user_data_queue,
+                show_viewer_controls,
+            ),
+            daemon=True,
+            name="3D Viewer Process",
+        )
         self._process.start()
         self.robot.events.subscribe(self._on_robot_state_update, Events.robot_state)
         self.robot.events.subscribe(self._on_nav_map_update, Events.nav_map_update)
@@ -281,7 +293,9 @@ class Viewer3DComponent(util.Component):
             the arguments list must match the parameters accepted by the
             supplied function.
         """
-        self._extra_render_function_queue.put(_ExternalRenderCallFunctor(render_function, args))
+        self._extra_render_function_queue.put(
+            _ExternalRenderCallFunctor(render_function, args)
+        )
 
     def close(self):
         """Closes the background process showing the 3D view.
@@ -313,7 +327,7 @@ class Viewer3DComponent(util.Component):
             self._process = None
 
     def connect_to_cube(self):
-        '''Connect to light cube'''
+        """Connect to light cube"""
         if self.connecting_to_cube:
             return
 
@@ -335,7 +349,9 @@ class Viewer3DComponent(util.Component):
         close_event = self._close_event
         while close_event and not close_event.is_set():
             try:
-                input_intents = self._input_intent_queue.get(True, timeout=2)  # type: RobotControlIntents
+                input_intents = self._input_intent_queue.get(
+                    True, timeout=2
+                )  # type: RobotControlIntents
 
                 # Track last-used intents so that we only issue motor controls
                 # if different from the last frame (to minimize it fighting with an SDK
@@ -343,21 +359,37 @@ class Viewer3DComponent(util.Component):
                 old_intents = self._last_robot_control_intents
                 self._last_robot_control_intents = input_intents
 
-                if not old_intents or (old_intents.left_wheel_speed != input_intents.left_wheel_speed
-                                       or old_intents.right_wheel_speed != input_intents.right_wheel_speed):
-                    self.robot.motors.set_wheel_motors(input_intents.left_wheel_speed,
-                                                       input_intents.right_wheel_speed,
-                                                       input_intents.left_wheel_speed * 4,
-                                                       input_intents.right_wheel_speed * 4,
-                                                       _return_future=True)
+                if not old_intents or (
+                    old_intents.left_wheel_speed != input_intents.left_wheel_speed
+                    or old_intents.right_wheel_speed != input_intents.right_wheel_speed
+                ):
+                    self.robot.motors.set_wheel_motors(
+                        input_intents.left_wheel_speed,
+                        input_intents.right_wheel_speed,
+                        input_intents.left_wheel_speed * 4,
+                        input_intents.right_wheel_speed * 4,
+                        _return_future=True,
+                    )
 
-                if not old_intents or old_intents.lift_speed != input_intents.lift_speed:
-                    self.robot.motors.set_lift_motor(input_intents.lift_speed, _return_future=True)
+                if (
+                    not old_intents
+                    or old_intents.lift_speed != input_intents.lift_speed
+                ):
+                    self.robot.motors.set_lift_motor(
+                        input_intents.lift_speed, _return_future=True
+                    )
 
-                if not old_intents or old_intents.head_speed != input_intents.head_speed:
-                    self.robot.motors.set_head_motor(input_intents.head_speed, _return_future=True)
+                if (
+                    not old_intents
+                    or old_intents.head_speed != input_intents.head_speed
+                ):
+                    self.robot.motors.set_head_motor(
+                        input_intents.head_speed, _return_future=True
+                    )
 
-                if input_intents.connect_to_light_block and (old_intents is None or not old_intents.connect_to_light_block):
+                if input_intents.connect_to_light_block and (
+                    old_intents is None or not old_intents.connect_to_light_block
+                ):
                     threading.Thread(target=self.connect_to_cube).start()
 
             except mp.queues.Empty:
@@ -376,6 +408,7 @@ class Viewer3DComponent(util.Component):
             (main) process via a multiprocessing queue.
         """
         from .opengl import opengl_vector
+
         world_frame = opengl_vector.WorldRenderFrame(robot, self.connecting_to_cube)
         queue = self._world_frame_queue
         if queue:

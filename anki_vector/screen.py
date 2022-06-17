@@ -19,8 +19,12 @@ The screen is 184 x 96 color (RGB565) pixels. The active area is 23.2mm x 12.1mm
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['dimensions', 'convert_image_to_screen_data',
-           'convert_pixels_to_screen_data', 'ScreenComponent']
+__all__ = [
+    "dimensions",
+    "convert_image_to_screen_data",
+    "convert_pixels_to_screen_data",
+    "ScreenComponent",
+]
 
 import sys
 
@@ -51,7 +55,9 @@ def dimensions():
     return SCREEN_WIDTH, SCREEN_HEIGHT
 
 
-def convert_pixels_to_screen_data(pixel_data: list, image_width: int, image_height: int):
+def convert_pixels_to_screen_data(
+    pixel_data: list, image_width: int, image_height: int
+):
     """Convert a sequence of pixel data to the correct format to display on Vector's face.
 
     :param pixel_data: sequence of triplets representing rgb values, should be ints from 0-255
@@ -77,11 +83,11 @@ def convert_pixels_to_screen_data(pixel_data: list, image_width: int, image_heig
         ValueError: Bad image_height
     """
     if len(pixel_data) != (image_width * image_height):
-        raise ValueError('Invalid Dimensions: len(pixel_data) {0} != image_width={1} * image_height={2} (== {3})'. format(len(pixel_data),
-                                                                                                                          image_width,
-                                                                                                                          image_height,
-                                                                                                                          image_width *
-                                                                                                                          image_height))
+        raise ValueError(
+            "Invalid Dimensions: len(pixel_data) {0} != image_width={1} * image_height={2} (== {3})".format(
+                len(pixel_data), image_width, image_height, image_width * image_height
+            )
+        )
 
     # @TODO: We should decide on a resampling approach and have this function automatically rescale images
     #  We should either enforce the aspect ratio, or have options to:
@@ -89,10 +95,18 @@ def convert_pixels_to_screen_data(pixel_data: list, image_width: int, image_heig
     #  - stretch to fit
     #  - shrink to fit with margins some default color
     if image_width != SCREEN_WIDTH:
-        raise ValueError('Bad image_width: image_width {0} must be the resolution width: {1}'. format(image_width, SCREEN_WIDTH))
+        raise ValueError(
+            "Bad image_width: image_width {0} must be the resolution width: {1}".format(
+                image_width, SCREEN_WIDTH
+            )
+        )
 
     if image_height != SCREEN_HEIGHT:
-        raise ValueError('Bad image_height: image_height {0} must be the resolution height: {1}'. format(image_height, SCREEN_HEIGHT))
+        raise ValueError(
+            "Bad image_height: image_height {0} must be the resolution height: {1}".format(
+                image_height, SCREEN_HEIGHT
+            )
+        )
 
     color_565_data = []
     for color_tuple in pixel_data:
@@ -136,7 +150,9 @@ class ScreenComponent(util.Component):
     """Handles messaging to control Vector's screen"""
 
     @connection.on_connection_thread(log_messaging=False)
-    async def set_screen_with_image_data(self, image_data: bytes, duration_sec: float, interrupt_running: bool = True):
+    async def set_screen_with_image_data(
+        self, image_data: bytes, duration_sec: float, interrupt_running: bool = True
+    ):
         """
         Display an image on Vector's Screen (his "face").
 
@@ -168,7 +184,9 @@ class ScreenComponent(util.Component):
         if not isinstance(image_data, bytes):
             raise ValueError("set_screen_with_image_data expected bytes")
         if len(image_data) != 35328:
-            raise ValueError("set_screen_with_image_data expected 35328 bytes - (2 bytes each for 17664 pixels)")
+            raise ValueError(
+                "set_screen_with_image_data expected 35328 bytes - (2 bytes each for 17664 pixels)"
+            )
 
         # Generate the message
         message = protocol.DisplayFaceImageRGBRequest()
@@ -179,7 +197,12 @@ class ScreenComponent(util.Component):
 
         return await self.grpc_interface.DisplayFaceImageRGB(message)
 
-    def set_screen_to_color(self, solid_color: color.Color, duration_sec: float, interrupt_running: bool = True):
+    def set_screen_to_color(
+        self,
+        solid_color: color.Color,
+        duration_sec: float,
+        interrupt_running: bool = True,
+    ):
         """
         Set Vector's Screen (his "face"). to a solid color.
 
@@ -198,4 +221,6 @@ class ScreenComponent(util.Component):
         :param interrupt_running: Set to true so any currently-streaming animation will be aborted in favor of this.
         """
         image_data = bytes(solid_color.rgb565_bytepair * 17664)
-        return self.set_screen_with_image_data(image_data, duration_sec, interrupt_running)
+        return self.set_screen_with_image_data(
+            image_data, duration_sec, interrupt_running
+        )
