@@ -265,6 +265,7 @@ class EventHandler:
                 
                 if not "event" in evt:
                     continue
+
                 try:
                     unpackaged_event_key, unpackaged_event_data = self._unpackage_event(
                         "event_type", evt.event
@@ -273,7 +274,7 @@ class EventHandler:
                         unpackaged_event_data, unpackaged_event_key
                     )
                 except TypeError:
-                    self.logger.warning("Unknown Event type: %s", evt)
+                    self.logger.warning("Unknown Event type: %s, python type: %s", evt.event,type(evt.event))
         except CancelledError:
             self.logger.debug(
                 "Event handler task was cancelled. This is expected during disconnection."
