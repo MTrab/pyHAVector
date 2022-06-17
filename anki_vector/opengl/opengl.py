@@ -37,13 +37,22 @@ Warning:
 """
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['Camera', 'DynamicTexture', 'MaterialLibrary', 'MeshData', 'MeshFace', 'MeshGroup', 'OpenGLWindow',
-           'PrecomputedView', 'ResourceManager',
-           'raise_opengl_or_pillow_import_error']
+__all__ = [
+    "Camera",
+    "DynamicTexture",
+    "MaterialLibrary",
+    "MeshData",
+    "MeshFace",
+    "MeshGroup",
+    "OpenGLWindow",
+    "PrecomputedView",
+    "ResourceManager",
+    "raise_opengl_or_pillow_import_error",
+]
 
 import math
 import sys
-from typing import List, Dict
+from typing import Dict, List
 
 from pkg_resources import resource_stream
 
@@ -58,28 +67,90 @@ class InvalidOpenGLGlutImplementation(ImportError):
 #: Adds context to exceptions raised from attempts to import OpenGL libraries
 def raise_opengl_or_pillow_import_error(opengl_import_exc):
     if isinstance(opengl_import_exc, InvalidOpenGLGlutImplementation):
-        raise NotImplementedError('GLUT (OpenGL Utility Toolkit) is not available:\n%s'
-                                  % opengl_import_exc)
-    raise NotImplementedError('OpenGL is not available; '
-                              'make sure the PyOpenGL and Pillow packages are installed:\n'
-                              'Do `pip3 install --user "anki_vector[3dviewer]"` to install. Error: %s' % opengl_import_exc)
+        raise NotImplementedError(
+            "GLUT (OpenGL Utility Toolkit) is not available:\n%s" % opengl_import_exc
+        )
+    raise NotImplementedError(
+        "OpenGL is not available; "
+        "make sure the PyOpenGL and Pillow packages are installed:\n"
+        'Do `pip3 install --user "anki_vector[3dviewer]"` to install. Error: %s'
+        % opengl_import_exc
+    )
 
 
 try:
-    from OpenGL.GL import (GL_AMBIENT, GL_AMBIENT_AND_DIFFUSE, GL_CCW, GL_COLOR_BUFFER_BIT, GL_COMPILE, GL_DEPTH_BUFFER_BIT, GL_DEPTH_TEST, GL_DIFFUSE,
-                           GL_FRONT, GL_LIGHT0, GL_LINEAR, GL_MODELVIEW, GL_POLYGON, GL_PROJECTION, GL_POSITION, GL_RGBA, GL_SHININESS, GL_SMOOTH, GL_SPECULAR,
-                           GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER, GL_UNSIGNED_BYTE,
-                           glBegin, glBindTexture, glCallList, glClear, glClearColor, glColor, glDisable, glEnable,
-                           glEnd, glEndList, glFrontFace, glGenLists, glGenTextures, glLoadIdentity, glLightfv, glMaterialfv, glMatrixMode, glNewList,
-                           glNormal3fv, glScalef, glShadeModel, glTexCoord2fv, glTexImage2D, glTexParameteri,
-                           glTexSubImage2D, glVertex3fv, glViewport)
-    from OpenGL.GLU import gluLookAt, gluPerspective
-    from OpenGL.GLUT import (glutCreateWindow, glutDisplayFunc, glutIdleFunc, glutInit, glutInitDisplayMode,
-                             glutInitWindowPosition, glutInitWindowSize, glutPostRedisplay, glutReshapeFunc,
-                             glutSetWindow, glutSwapBuffers, glutVisibilityFunc,
-                             GLUT_DEPTH, GLUT_DOUBLE, GLUT_RGB, GLUT_VISIBLE)
     from OpenGL.error import NullFunctionError
-
+    from OpenGL.GL import (
+        GL_AMBIENT,
+        GL_AMBIENT_AND_DIFFUSE,
+        GL_CCW,
+        GL_COLOR_BUFFER_BIT,
+        GL_COMPILE,
+        GL_DEPTH_BUFFER_BIT,
+        GL_DEPTH_TEST,
+        GL_DIFFUSE,
+        GL_FRONT,
+        GL_LIGHT0,
+        GL_LINEAR,
+        GL_MODELVIEW,
+        GL_POLYGON,
+        GL_POSITION,
+        GL_PROJECTION,
+        GL_RGBA,
+        GL_SHININESS,
+        GL_SMOOTH,
+        GL_SPECULAR,
+        GL_TEXTURE_2D,
+        GL_TEXTURE_MAG_FILTER,
+        GL_TEXTURE_MIN_FILTER,
+        GL_UNSIGNED_BYTE,
+        glBegin,
+        glBindTexture,
+        glCallList,
+        glClear,
+        glClearColor,
+        glColor,
+        glDisable,
+        glEnable,
+        glEnd,
+        glEndList,
+        glFrontFace,
+        glGenLists,
+        glGenTextures,
+        glLightfv,
+        glLoadIdentity,
+        glMaterialfv,
+        glMatrixMode,
+        glNewList,
+        glNormal3fv,
+        glScalef,
+        glShadeModel,
+        glTexCoord2fv,
+        glTexImage2D,
+        glTexParameteri,
+        glTexSubImage2D,
+        glVertex3fv,
+        glViewport,
+    )
+    from OpenGL.GLU import gluLookAt, gluPerspective
+    from OpenGL.GLUT import (
+        GLUT_DEPTH,
+        GLUT_DOUBLE,
+        GLUT_RGB,
+        GLUT_VISIBLE,
+        glutCreateWindow,
+        glutDisplayFunc,
+        glutIdleFunc,
+        glutInit,
+        glutInitDisplayMode,
+        glutInitWindowPosition,
+        glutInitWindowSize,
+        glutPostRedisplay,
+        glutReshapeFunc,
+        glutSetWindow,
+        glutSwapBuffers,
+        glutVisibilityFunc,
+    )
     from PIL import Image
 
 except ImportError as import_exc:
@@ -90,15 +161,17 @@ except ImportError as import_exc:
 
 
 def _glut_install_instructions():
-    if sys.platform.startswith('linux'):
+    if sys.platform.startswith("linux"):
         return "Install freeglut: `sudo apt-get install freeglut3`"
-    if sys.platform.startswith('darwin'):
+    if sys.platform.startswith("darwin"):
         return "GLUT should already be installed by default on macOS!"
-    if sys.platform in ('win32', 'cygwin'):
-        return "Install freeglut: You can download it from http://freeglut.sourceforge.net/ \n"\
-            "You just need the `freeglut.dll` file, from any of the 'Windows binaries' downloads. "\
-            "Place the DLL next to your Python script, or install it somewhere in your PATH "\
+    if sys.platform in ("win32", "cygwin"):
+        return (
+            "Install freeglut: You can download it from http://freeglut.sourceforge.net/ \n"
+            "You just need the `freeglut.dll` file, from any of the 'Windows binaries' downloads. "
+            "Place the DLL next to your Python script, or install it somewhere in your PATH "
             "to allow any script to use it."
+        )
     return "(Instructions unknown for platform %s)" % sys.platform
 
 
@@ -119,7 +192,7 @@ if not _verify_glut_init():
     raise InvalidOpenGLGlutImplementation(_glut_install_instructions())
 
 
-class ResourceManager():
+class ResourceManager:
     """Handles returning file resources by keys. The current implementation delegates to resource_stream
     directly.
 
@@ -143,7 +216,9 @@ class ResourceManager():
 
         :param args: string keys for identifying the asset.
         """
-        resource_path = '/'.join(map(str, args))  # Note: Deliberately not os.path.join, for use with pkg_resources
+        resource_path = "/".join(
+            map(str, args)
+        )  # Note: Deliberately not os.path.join, for use with pkg_resources
         return resource_stream(self._context_id, resource_path)
 
 
@@ -177,19 +252,37 @@ class DynamicTexture:
         self.bind()
         if (self._width == image_width) and (self._height == image_height):
             # Same size - just need to update the texels.
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, image_width, image_height,
-                            GL_RGBA, GL_UNSIGNED_BYTE, image)
+            glTexSubImage2D(
+                GL_TEXTURE_2D,
+                0,
+                0,
+                0,
+                image_width,
+                image_height,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
+                image,
+            )
         else:
             # Different size than the last frame (e.g. the Window is resizing)
             # Create a new texture of the correct size.
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height,
-                         0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+            glTexImage2D(
+                GL_TEXTURE_2D,
+                0,
+                GL_RGBA,
+                image_width,
+                image_height,
+                0,
+                GL_RGBA,
+                GL_UNSIGNED_BYTE,
+                image,
+            )
 
         self._width = image_width
         self._height = image_height
 
 
-class MaterialLibrary():  # pylint: disable=too-few-public-methods
+class MaterialLibrary:  # pylint: disable=too-few-public-methods
     """Load a .mtl material asset, and return the contents as a dictionary.
 
     Supports the subset of MTL required for the Vector 3D Viewer assets.
@@ -202,11 +295,11 @@ class MaterialLibrary():  # pylint: disable=too-few-public-methods
         self._contents = {}
         current_mtl: dict = None
 
-        file_data = resource_context.load('assets', asset_key)
+        file_data = resource_context.load("assets", asset_key)
 
         for line in file_data:
             line = line.decode("utf-8")  # Convert bytes line to a string
-            if line.startswith('#'):
+            if line.startswith("#"):
                 # Ignore comments in the file.
                 continue
 
@@ -216,38 +309,51 @@ class MaterialLibrary():  # pylint: disable=too-few-public-methods
                 continue
 
             attribute_name = values[0]
-            if attribute_name == 'newmtl':
+            if attribute_name == "newmtl":
                 # Create a new empty material.
                 current_mtl = self._contents[values[1]] = {}
             elif current_mtl is None:
                 raise ValueError("mtl file must start with newmtl statement")
-            elif attribute_name == 'map_Kd':
+            elif attribute_name == "map_Kd":
                 # Diffuse texture map - load the image into memory.
                 image_name = values[1]
-                image_file_data = resource_context.load('assets', image_name)
+                image_file_data = resource_context.load("assets", image_name)
                 with Image.open(image_file_data) as image:
                     image_width, image_height = image.size
                     image = image.convert("RGBA").tobytes("raw", "RGBA")
 
                 # Bind the image as a texture that can be used for rendering.
                 texture_id = glGenTextures(1)
-                current_mtl['texture_Kd'] = texture_id  # pylint: disable=unsupported-assignment-operation
+                current_mtl[
+                    "texture_Kd"
+                ] = texture_id  # pylint: disable=unsupported-assignment-operation
 
                 glBindTexture(GL_TEXTURE_2D, texture_id)
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image_width, image_height,
-                             0, GL_RGBA, GL_UNSIGNED_BYTE, image)
+                glTexImage2D(
+                    GL_TEXTURE_2D,
+                    0,
+                    GL_RGBA,
+                    image_width,
+                    image_height,
+                    0,
+                    GL_RGBA,
+                    GL_UNSIGNED_BYTE,
+                    image,
+                )
             else:
                 # Store the values for this attribute as a list of float values.
-                current_mtl[attribute_name] = list(map(float, values[1:]))  # pylint: disable=unsupported-assignment-operation
+                current_mtl[attribute_name] = list(
+                    map(float, values[1:])
+                )  # pylint: disable=unsupported-assignment-operation
 
     def get_material_by_name(self, name: str) -> dict:
         """Returns a dict of material attributes"""
         return self._contents[name]
 
 
-class MeshFace():
+class MeshFace:
     """A face polygon in 3d space - the basic building block of 3D models.
 
     The actual coordinate data is stored in tables on the host mesh, the face contains
@@ -259,7 +365,13 @@ class MeshFace():
     :param active_material: Material name used to render this face.
     """
 
-    def __init__(self, position_ids: List[int], normal_ids: List[int], tex_ids: List[int], active_material: str):
+    def __init__(
+        self,
+        position_ids: List[int],
+        normal_ids: List[int],
+        tex_ids: List[int],
+        active_material: str,
+    ):
         self._position_ids = position_ids
         self._normal_ids = normal_ids
         self._tex_ids = tex_ids
@@ -294,7 +406,7 @@ class MeshFace():
         return self._vertex_count
 
 
-class MeshGroup():
+class MeshGroup:
     """A colletions of face polygons which can be rendered as a group by name.
 
     :param name: The name associated with this part of the 3d mesh collection.
@@ -337,7 +449,7 @@ class MeshGroup():
         tex_ids: List(int) = []
 
         for vertex in source_values:
-            vertex_components = vertex.split('/')
+            vertex_components = vertex.split("/")
 
             position_ids.append(int(vertex_components[0]))
 
@@ -358,7 +470,7 @@ class MeshGroup():
         self._faces.append(MeshFace(position_ids, normal_ids, tex_ids, active_material))
 
 
-class MeshData():
+class MeshData:
     """The loaded / parsed contents of a 3D Wavefront OBJ file.
 
     This is the intermediary step between the file on the disk, and a renderable
@@ -425,12 +537,12 @@ class MeshData():
         active_group_name: str = None
         active_material: str = None
 
-        file_data = self._resource_manager.load('assets', asset_key)
+        file_data = self._resource_manager.load("assets", asset_key)
 
         for data_entry in file_data:
 
             line = data_entry.decode("utf-8")  # Convert bytes to string
-            if line.startswith('#'):
+            if line.startswith("#"):
                 # ignore comments in the file
                 continue
 
@@ -439,46 +551,51 @@ class MeshData():
                 # ignore empty lines
                 continue
 
-            if values[0] == 'v':
+            if values[0] == "v":
                 # vertex position
                 v = list(map(float, values[1:4]))
                 self._vertices.append(v)
-            elif values[0] == 'vn':
+            elif values[0] == "vn":
                 # vertex normal
                 v = list(map(float, values[1:4]))
                 self._normals.append(v)
-            elif values[0] == 'vt':
+            elif values[0] == "vt":
                 # texture coordinate
                 v = list(map(float, values[1:3]))
                 self._tex_coords.append(v)
-            elif values[0] in ('usemtl', 'usemat'):
+            elif values[0] in ("usemtl", "usemat"):
                 # material
                 active_material = values[1]
-            elif values[0] == 'mtllib':
+            elif values[0] == "mtllib":
                 # material library (a filename)
-                self._material_library = MaterialLibrary(self._resource_manager, values[1])
-            elif values[0] == 'f':
+                self._material_library = MaterialLibrary(
+                    self._resource_manager, values[1]
+                )
+            elif values[0] == "f":
                 if active_group_name not in self._groups:
                     self._groups[active_group_name] = MeshGroup(active_group_name)
 
                 group = self._groups[active_group_name]
                 group.add_face_by_obj_data(values[1:], active_material)
 
-            elif values[0] == 'o':
+            elif values[0] == "o":
                 # object name - ignore
                 continue
-            elif values[0] == 'g':
+            elif values[0] == "g":
                 # group name (for a sub-mesh)
                 active_group_name = values[1]
-            elif values[0] == 's':
+            elif values[0] == "s":
                 # smooth shading (1..20, and 'off') - ignore
                 continue
             else:
-                self._logger.warning("LoadedObjFile Ignoring unhandled type '%s' in line %s",
-                                     values[0], values)
+                self._logger.warning(
+                    "LoadedObjFile Ignoring unhandled type '%s' in line %s",
+                    values[0],
+                    values,
+                )
 
 
-class PrecomputedView():
+class PrecomputedView:
     """A collection of static 3D object which are pre-computed on the graphics card, so they can
     be quickly drawn when needed."""
 
@@ -492,37 +609,38 @@ class PrecomputedView():
 
         :param material: A dictionary of MTL attributes defining a material.
         """
+
         def _as_rgba(color):
             if len(color) >= 4:
                 return color
             # RGB - add alpha defaulted to 1
             return color + [1.0]
 
-        if 'texture_Kd' in material:
+        if "texture_Kd" in material:
             # use diffuse texture map
-            glBindTexture(GL_TEXTURE_2D, material['texture_Kd'])
+            glBindTexture(GL_TEXTURE_2D, material["texture_Kd"])
         else:
             # No texture map
             glBindTexture(GL_TEXTURE_2D, 0)
 
         # Diffuse light
-        mtl_kd_rgba = _as_rgba(material['Kd'])
+        mtl_kd_rgba = _as_rgba(material["Kd"])
         glColor(mtl_kd_rgba)
 
         # Ambient light
-        if 'Ka' in material:
-            mtl_ka_rgba = _as_rgba(material['Ka'])
+        if "Ka" in material:
+            mtl_ka_rgba = _as_rgba(material["Ka"])
             glMaterialfv(GL_FRONT, GL_AMBIENT, mtl_ka_rgba)
             glMaterialfv(GL_FRONT, GL_DIFFUSE, mtl_kd_rgba)
         else:
             glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, mtl_kd_rgba)
 
         # Specular light
-        if 'Ks' in material:
-            mtl_ks_rgba = _as_rgba(material['Ks'])
+        if "Ks" in material:
+            mtl_ks_rgba = _as_rgba(material["Ks"])
             glMaterialfv(GL_FRONT, GL_SPECULAR, mtl_ks_rgba)
-            if 'Ns' in material:
-                specular_exponent = material['Ns']
+            if "Ns" in material:
+                specular_exponent = material["Ns"]
                 glMaterialfv(GL_FRONT, GL_SHININESS, specular_exponent)
 
     def build_from_mesh_data(self, mesh_data: MeshData):
@@ -544,7 +662,9 @@ class PrecomputedView():
             glFrontFace(GL_CCW)
 
             for face in group.faces:
-                self._apply_material(material_library.get_material_by_name(face.material))
+                self._apply_material(
+                    material_library.get_material_by_name(face.material)
+                )
 
                 # Polygon (N verts) with optional normals and tex coords
                 glBegin(GL_POLYGON)
@@ -585,7 +705,9 @@ class PrecomputedView():
         try:
             glCallList(self._display_lists[key])
         except KeyError:
-            raise KeyError('No display list with key {0} present on PrerenderedView'.format(key))
+            raise KeyError(
+                "No display list with key {0} present on PrerenderedView".format(key)
+            )
 
     def display_all(self):
         """Renders all pre-computed geometry in the view collection."""
@@ -593,7 +715,7 @@ class PrecomputedView():
             glCallList(display_list)
 
 
-class Camera():
+class Camera:
     """Class containing the state of a 3d camera, used to transform all object in a scene with
     relation to a particular point of view.
 
@@ -606,7 +728,14 @@ class Camera():
     :param yaw: The camera's current rotation about its up axis
     """
 
-    def __init__(self, look_at: util.Vector3, up: util.Vector3, distance: float, pitch: float, yaw: float):
+    def __init__(
+        self,
+        look_at: util.Vector3,
+        up: util.Vector3,
+        distance: float,
+        pitch: float,
+        yaw: float,
+    ):
         # Camera position and orientation defined by a look-at positions
         # and a pitch/and yaw to rotate around that along with a distance
         self._look_at = look_at
@@ -626,7 +755,12 @@ class Camera():
     def look_at(self, look_at):
         self._look_at = look_at
 
-    def move(self, forward_amount: float = 0.0, right_amount: float = 0.0, up_amount: float = 0.0):
+    def move(
+        self,
+        forward_amount: float = 0.0,
+        right_amount: float = 0.0,
+        up_amount: float = 0.0,
+    ):
         """Offsets the camera's position incrementally.
 
         :param forward_amount: distance to move along the camera's current forward heading.
@@ -646,12 +780,12 @@ class Camera():
         self._look_at += util.Vector3(
             right_amount * math.cos(heading + half_pi),
             right_amount * math.sin(heading + half_pi),
-            0.0)
+            0.0,
+        )
 
         self._look_at += util.Vector3(
-            forward_amount * math.cos(heading),
-            forward_amount * math.sin(heading),
-            0.0)
+            forward_amount * math.cos(heading), forward_amount * math.sin(heading), 0.0
+        )
 
     def zoom(self, amount: float):
         """Moves the camera closer or further from it's target point.
@@ -667,7 +801,7 @@ class Camera():
         :param pitch_delta: Amount to rotate around the camera's X axis.  This is automatically capped between +/- pi/2
         """
         # Adjust the Camera pitch and yaw
-        self._pitch = (self._pitch - pitch_delta)
+        self._pitch = self._pitch - pitch_delta
         self._yaw = (self._yaw + yaw_delta) % (2.0 * math.pi)
 
         # Clamp pitch to slightyly less than pi/2 to avoid lock/errors at full up/down
@@ -686,18 +820,17 @@ class Camera():
         self._pos = util.Vector3(
             cam_look_at.x + (cam_distance * cos_pitch * cos_yaw),
             cam_look_at.y + (cam_distance * cos_pitch * sin_yaw),
-            cam_look_at.z + (cam_distance * sin_pitch))
+            cam_look_at.z + (cam_distance * sin_pitch),
+        )
 
     def apply(self):
         """Applies the transform this camera represents to the active OpenGL context."""
         self._update_pos()
 
-        gluLookAt(*self._pos.x_y_z,
-                  *self._look_at.x_y_z,
-                  *self._up.x_y_z)
+        gluLookAt(*self._pos.x_y_z, *self._look_at.x_y_z, *self._up.x_y_z)
 
 
-class Projector():  # pylint: disable=too-few-public-methods
+class Projector:  # pylint: disable=too-few-public-methods
     """Configuration for how 3d objects are projected onto the 2d window.
 
     :param fov: (Field of View) The viewing angle in degrees between the center of the window, and the top/bottom.
@@ -727,7 +860,7 @@ class Projector():  # pylint: disable=too-few-public-methods
         glLoadIdentity()
 
 
-class Light():  # pylint: disable=too-few-public-methods
+class Light:  # pylint: disable=too-few-public-methods
     """Configuration for a light in the OpenGL scene that effects the shading of 3d geometry.
 
     :param ambient_color: Color applied to all geometry in the scene regardless of their relation to the light.
@@ -737,12 +870,24 @@ class Light():  # pylint: disable=too-few-public-methods
     :param is_directional: Flag that sets the light to shine globally from a specified direction rather than an origin point (i.e. Sun light).
     """
 
-    def __init__(self, ambient_color: List[float], diffuse_color: List[float], specular_color: List[float], position: util.Vector3, is_directional: bool = False):
+    def __init__(
+        self,
+        ambient_color: List[float],
+        diffuse_color: List[float],
+        specular_color: List[float],
+        position: util.Vector3,
+        is_directional: bool = False,
+    ):
         self._ambient_color = ambient_color
         self._diffuse_color = diffuse_color
         self._specular_color = specular_color
         # w coordinate of '1' indicates a positional light in OpenGL, while '0' would indicate a directional light
-        self._position_coords = [position.x, position.y, position.z, 0 if is_directional else 1]
+        self._position_coords = [
+            position.x,
+            position.y,
+            position.z,
+            0 if is_directional else 1,
+        ]
 
     def apply(self, index: int):
         """Applies this light to the active OpenGL context.
@@ -757,7 +902,7 @@ class Light():  # pylint: disable=too-few-public-methods
         glEnable(opengl_index)
 
 
-class OpenGLWindow():
+class OpenGLWindow:
     """A Window displaying an OpenGL viewport.
 
     :param x: The initial x coordinate of the window in pixels.
@@ -809,7 +954,9 @@ class OpenGLWindow():
 
         glutDisplayFunc(display_function)
 
-    def prepare_for_rendering(self, projector: Projector, camera: Camera, lights: List[Light]):
+    def prepare_for_rendering(
+        self, projector: Projector, camera: Camera, lights: List[Light]
+    ):
         """Selects the window, clears buffers, and sets up the scene transform and lighting state.
 
         :param projector: The projector configuration to use for this rendering pass.
@@ -837,8 +984,7 @@ class OpenGLWindow():
 
     @staticmethod
     def display_rendered_content():
-        """Swaps buffers once rendering is finished.
-        """
+        """Swaps buffers once rendering is finished."""
         glutSwapBuffers()
 
     def _idle(self):  # pylint: disable=no-self-use

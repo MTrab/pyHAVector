@@ -21,24 +21,26 @@ from grpc import RpcError, StatusCode
 from .messaging import protocol
 
 # __all__ should order by constants, event classes, other classes, functions.
-__all__ = ['VectorAsyncException',
-           'VectorBehaviorControlException',
-           'VectorCameraFeedException',
-           'VectorConfigurationException',
-           'VectorConnectionException',
-           'VectorControlException',
-           'VectorControlTimeoutException',
-           'VectorException',
-           'VectorInvalidVersionException',
-           'VectorNotFoundException',
-           'VectorNotReadyException',
-           'VectorPropertyValueNotReadyException',
-           'VectorTimeoutException',
-           'VectorUnauthenticatedException',
-           'VectorUnavailableException',
-           'VectorUnimplementedException',
-           'VectorExternalAudioPlaybackException',
-           'connection_error']
+__all__ = [
+    "VectorAsyncException",
+    "VectorBehaviorControlException",
+    "VectorCameraFeedException",
+    "VectorConfigurationException",
+    "VectorConnectionException",
+    "VectorControlException",
+    "VectorControlTimeoutException",
+    "VectorException",
+    "VectorInvalidVersionException",
+    "VectorNotFoundException",
+    "VectorNotReadyException",
+    "VectorPropertyValueNotReadyException",
+    "VectorTimeoutException",
+    "VectorUnauthenticatedException",
+    "VectorUnavailableException",
+    "VectorUnimplementedException",
+    "VectorExternalAudioPlaybackException",
+    "connection_error",
+]
 
 
 class VectorException(Exception):
@@ -53,13 +55,17 @@ class VectorInvalidVersionException(VectorException):
         min_host = protocol.PROTOCOL_VERSION_MINIMUM
         client = protocol.PROTOCOL_VERSION_CURRENT
         if min_host > host:
-            error_message = (f"{self.__class__.__doc__}\n\n"
-                             f"Your Vector is an older version that is not supported by the SDK: Vector={host}, SDK minimum={min_host}\n"
-                             f"Use your app to make sure that Vector is on the internet, and able to download the latest update.")
+            error_message = (
+                f"{self.__class__.__doc__}\n\n"
+                f"Your Vector is an older version that is not supported by the SDK: Vector={host}, SDK minimum={min_host}\n"
+                f"Use your app to make sure that Vector is on the internet, and able to download the latest update."
+            )
         else:
-            error_message = (f"{self.__class__.__doc__}\n\n"
-                             f"Your SDK is an older version that is not supported by Vector: Vector={host}, SDK={client}\n"
-                             f"Please install the latest SDK to continue.")
+            error_message = (
+                f"{self.__class__.__doc__}\n\n"
+                f"Your SDK is an older version that is not supported by Vector: Vector={host}, SDK={client}\n"
+                f"Please install the latest SDK to continue."
+            )
         super().__init__(error_message)
 
 
@@ -67,9 +73,11 @@ class VectorControlException(VectorException):
     """Unable to run a function which requires behavior control."""
 
     def __init__(self, function):
-        msg = (f"Unable to run '{function}' because it requires behavior control.\n\n"
-               "Make sure to request control from Vector either by providing the 'behavior_control_level' parameter to Robot, "
-               "or directly call 'request_control()' on your connection.")
+        msg = (
+            f"Unable to run '{function}' because it requires behavior control.\n\n"
+            "Make sure to request control from Vector either by providing the 'behavior_control_level' parameter to Robot, "
+            "or directly call 'request_control()' on your connection."
+        )
         super().__init__(msg)
 
 
@@ -79,8 +87,10 @@ class VectorConnectionException(VectorException):
         if cause is not None:
             self._status = cause.code()
             self._details = cause.details()
-            msg = (f"{self._status}: {self._details}"
-                   f"\n\n{doc_str if doc_str else 'Unknown error'}")
+            msg = (
+                f"{self._status}: {self._details}"
+                f"\n\n{doc_str if doc_str else 'Unknown error'}"
+            )
             super().__init__(msg)
         else:
             super().__init__(doc_str)
@@ -125,8 +135,10 @@ def connection_error(rpc_error: RpcError) -> VectorConnectionException:
 
 
 class _VectorGenericException(VectorException):
-    def __init__(self, _cause=None, *args, **kwargs):  # pylint: disable=keyword-arg-before-vararg
-        msg = (f"{self.__class__.__doc__}\n\n{_cause if _cause is not None else ''}")
+    def __init__(
+        self, _cause=None, *args, **kwargs
+    ):  # pylint: disable=keyword-arg-before-vararg
+        msg = f"{self.__class__.__doc__}\n\n{_cause if _cause is not None else ''}"
         super().__init__(msg.format(*args, **kwargs))
 
 
@@ -141,7 +153,7 @@ class VectorBehaviorControlException(_VectorGenericException):
 class VectorCameraFeedException(_VectorGenericException):
     """The camera feed is not open.
 
-Make sure to enable the camera feed either using Robot(show_viewer=True), or robot.camera.init_camera_feed()"""
+    Make sure to enable the camera feed either using Robot(show_viewer=True), or robot.camera.init_camera_feed()"""
 
 
 class VectorConfigurationException(_VectorGenericException):
@@ -151,15 +163,13 @@ class VectorConfigurationException(_VectorGenericException):
 class VectorControlTimeoutException(_VectorGenericException):
     """Failed to get control of Vector.
 
-Please verify that Vector is connected to the internet, is on a flat surface, and is fully charged.
-"""
+    Please verify that Vector is connected to the internet, is on a flat surface, and is fully charged."""
 
 
 class VectorNotFoundException(_VectorGenericException):
     """Unable to establish a connection to Vector.
 
-Make sure you're on the same network, and Vector is connected to the internet.
-"""
+    Make sure you're on the same network, and Vector is connected to the internet."""
 
 
 class VectorNotReadyException(_VectorGenericException):
@@ -173,7 +183,7 @@ class VectorPropertyValueNotReadyException(_VectorGenericException):
 class VectorUnreliableEventStreamException(VectorException):
     """The robot event stream is currently unreliable.
 
-Please ensure the app is not connected. If this persists, reboot Vector and try again."""
+    Please ensure the app is not connected. If this persists, reboot Vector and try again."""
 
 
 class VectorExternalAudioPlaybackException(VectorException):
